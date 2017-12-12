@@ -41,10 +41,11 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         self.symmetric_key = os.urandom(32)
         self.client_cipher = crypto.Cipher(self.symmetric_key)
 
-    async def handshake(self) -> Tuple[int, crypto.Cipher]:
+    async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher]:
         init = xdrlib.Packer()
         init.pack_int(self.version)
         init.pack_string(self.client_id.encode('utf-8'))
+        init.pack_hyper(last_seen_order)
         await self._send_xdr(init)
 
         signature_request = await self._receive_xdr(timeout=3)
@@ -166,10 +167,11 @@ ClientWriter = Callable[[ClientWriterStub, int], Awaitable[None]]
 
 async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_keys: Keys,
                      read_callback: ClientReadCallback, writer: ClientWriter,
+                     last_seen_order: int,
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
         async with session.ws_connect(ws_addr) as ws:
-            sequence_id, server_cipher = await ws.handshake()
+            sequence_id, server_cipher = await ws.handshake(last_seen_order)
 
             async def reader_loop():
                 async for outbox_id, ts, msg in ws.receive_iter(server_cipher):

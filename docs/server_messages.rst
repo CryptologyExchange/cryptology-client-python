@@ -28,7 +28,8 @@ other partner orders)
                 946684800,
                 0
             ],
-            "trade_pair": "BTC_USD"
+            "trade_pair": "BTC_USD",
+            "client_order_id": 123
         }
 
 - ``BuyOrderAmountChanged``, ``SellOrderAmountChanged``
@@ -44,7 +45,8 @@ other partner orders)
                 946684800,
                 0
             ],
-            "trade_pair": "BTC_USD"
+            "trade_pair": "BTC_USD",
+            "client_order_id": 123
         }
 
 - ``BuyOrderCancelledMessage``, ``SellOrderCancelledMessage``
@@ -59,7 +61,8 @@ other partner orders)
                 946684800,
                 0
             ],
-            "trade_pair": "BTC_USD"
+            "trade_pair": "BTC_USD",
+            "client_order_id": 123
         }
 
 - ``BuyOrderClosedMessage``, ``SellOrderClosedMessage``
@@ -74,7 +77,8 @@ other partner orders)
                 946684800,
                 0
             ],
-            "trade_pair": "BTC_USD"
+            "trade_pair": "BTC_USD",
+            "client_order_id": 123
         }
 
 Wallet

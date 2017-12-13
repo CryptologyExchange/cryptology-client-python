@@ -9,8 +9,7 @@ Usage
 
     from cryptology import ClientWriterStub, Keys, run_client
 
-    async def main():
-        account_id = 'test'
+    async def main() -> None:
         client_keys = Keys.load('keys/test.pub', 'keys/test.priv')
         server_keys = Keys.load('keys/cryptology.pub', None)
 
@@ -29,7 +28,7 @@ Usage
             print(order, ts, payload)
 
         await run_client(
-            client_id=account_id,
+            client_id='test',
             client_keys=client_keys,
             ws_addr='ws://127.0.0.1:8080',
             server_keys=server_keys,

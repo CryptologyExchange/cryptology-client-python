@@ -128,6 +128,8 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                     raise exceptions.ConcurrentConnection()
                 elif msg.data == 4001:
                     raise exceptions.InvalidSequence()
+                elif msg.data == 4002:
+                    raise exceptions.DuplicateClientOrderId()
                 elif msg.data == 1012:
                     raise exceptions.ServerRestart()
             raise exceptions.Disconnected()

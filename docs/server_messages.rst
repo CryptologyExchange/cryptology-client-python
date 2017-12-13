@@ -11,7 +11,7 @@ will be sent over websocket connection. all order related messages are partner
 specific (i.e. you can't receive any of these messages for regular user or
 other partner orders)
 
-- ``BuyOrderPlacedMessage``
+- ``BuyOrderPlacedMessage``, ``SellOrderPlacedMessage``
     order was received by cryptology. ``closed_inline`` indicates
     order was fully executed immediately, it's safe not to expect (and therefore ignore
     following messages for this order, end of order lifecycle)
@@ -31,7 +31,7 @@ other partner orders)
             "trade_pair": "BTC_USD"
         }
 
-- ``BuyOrderAmountChanged``
+- ``BuyOrderAmountChanged``, ``SellOrderAmountChanged``
     order was partially executed, sets new amount
 
     .. code-block:: json
@@ -47,7 +47,7 @@ other partner orders)
             "trade_pair": "BTC_USD"
         }
 
-- ``BuyOrderCancelledMessage``
+- ``BuyOrderCancelledMessage``, ``SellOrderCancelledMessage``
     order was canceled (manual, TTL, IOC, FOK, tbd), end of order lifecycle
 
     .. code-block:: json
@@ -62,7 +62,7 @@ other partner orders)
             "trade_pair": "BTC_USD"
         }
 
-- ``BuyOrderClosedMessage``
+- ``BuyOrderClosedMessage``, ``SellOrderClosedMessage``
     order was fully executed, end of order lifecycle
 
     .. code-block:: json
@@ -76,14 +76,6 @@ other partner orders)
             ],
             "trade_pair": "BTC_USD"
         }
-
-sell orders have exactly the same data structure, only names are different
-
-- ``SellOrderPlacedMessage``
-- ``SellOrderAmountChanged``
-- ``SellOrderCancelledMessage``
-- ``SellOrderClosedMessage``
-
 
 Wallet
 ======

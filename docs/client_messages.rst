@@ -8,12 +8,22 @@ Order placement
 
 
 - ``PlaceBuyLimitOrder``
+    limit bid
+
 - ``PlaceBuyFoKOrder``
+    fill or kill bid
+
 - ``PlaceBuyIoCOrder``
+    immediate or cancel bid
 
 - ``PlaceSellLimitOrder``
+    limit ask
+
 - ``PlaceSellFoKOrder``
+    fill or kill ask
+
 - ``PlaceBuyIoCOrder``
+    immediate or cancel ask
 
 all order placement messages share same structure
 
@@ -26,3 +36,17 @@ all order placement messages share same structure
         "price": "15000.3",
         "client_order_id": 123
     }
+
+
+Order cancelation
+=================
+
+- ``CancelOrderMessage``
+    cancel any order
+
+    .. code-block:: json
+
+        {
+            "_cls": "CancelOrderMessage",
+            "order_id": 42
+        }

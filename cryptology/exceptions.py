@@ -27,6 +27,10 @@ class InvalidSequence(CryptologyProtocolError):
     pass
 
 
+class DuplicateClientOrderId(CryptologyProtocolError):
+    pass
+
+
 class UnsupportedMessage(CryptologyProtocolError):
     msg: aiohttp.WSMessage
 

@@ -19,7 +19,7 @@ other partner orders)
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderPlaced",
+            "@type": "BuyOrderPlaced",
             "amount": "1",
             "closed_inline": false,
             "order_id": 1,
@@ -38,7 +38,7 @@ other partner orders)
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderAmountChanged",
+            "@type": "BuyOrderAmountChanged",
             "amount": "1",
             "order_id": 1,
             "time": [
@@ -55,7 +55,7 @@ other partner orders)
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderCancelled",
+            "@type": "BuyOrderCancelled",
             "order_id": 1,
             "time": [
                 946684800,
@@ -71,7 +71,7 @@ other partner orders)
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderClosed",
+            "@type": "BuyOrderClosed",
             "order_id": 1,
             "time": [
                 946684800,
@@ -90,7 +90,7 @@ Wallet
     .. code-block:: json
 
         {
-            "_cls": "SetBalance",
+            "@type": "SetBalance",
             "balance": "1",
             "change": "1",
             "currency": "USD",
@@ -111,7 +111,7 @@ General
     .. code-block:: json
 
         {
-            "_cls": "AnonymousTrade",
+            "@type": "AnonymousTrade",
             "amount": "1",
             "maker_buy": false,
             "price": "1",
@@ -132,7 +132,7 @@ General
     .. code-block:: json
 
         {
-            "_cls": "OrderBookAgg",
+            "@type": "OrderBookAgg",
             "buy_levels": {
                 "1": "1"
             },

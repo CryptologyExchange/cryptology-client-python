@@ -30,7 +30,7 @@ all order placement messages share same structure
 .. code-block:: json
 
     {
-        "_cls": "PlaceBuyLimitOrder",
+        "@type": "PlaceBuyLimitOrder",
         "trade_pair": "BTC_USD",
         "amount": "10.1",
         "price": "15000.3",
@@ -47,6 +47,6 @@ Order cancelation
     .. code-block:: json
 
         {
-            "_cls": "CancelOrder",
+            "@type": "CancelOrder",
             "order_id": 42
         }

@@ -1,9 +1,13 @@
 .PHONY: all
-all: clean latex html
+all: clean sdist latex html
+
+.PHONY: sdist
+sdist:
+	./venv/bin/python setup.py sdist
 
 .PHONY: clean
 clean:
-	rm -rf html latex
+	rm -rf html latex dist build .mypy_cache *.egg-info
 
 .PHONY: latex
 latex:

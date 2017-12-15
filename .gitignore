@@ -6,3 +6,6 @@ dist/
 venv/
 html/
 latex/
+site/.terraform
+site/terraform.tfstate
+site/terraform.tfstate.backup

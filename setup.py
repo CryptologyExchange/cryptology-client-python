@@ -7,7 +7,7 @@ if sys.version_info < (3, 6):
 
 setup(
     name='cryptology-client-python',
-    version='0.1.0',
+    version='0.2.1',
     description='cryptology webscoket client',
     author='Victor Kotseruba',
     author_email='victor@cryptology.com',

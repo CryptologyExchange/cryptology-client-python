@@ -19,7 +19,7 @@ Usage
                 sequence_id += 1
                 await ws.send_signed(
                     sequence_id=sequence_id,
-                    payload={'_cls': 'PlaceBuyLimitOrder', 'trade_pair': 'BTC_USD',
+                    payload={'@type': 'PlaceBuyLimitOrder', 'trade_pair': 'BTC_USD',
                              'amount': '2.3', 'price': '15000.1',
                              'client_order_id': 123 + sequence_id}
                 )

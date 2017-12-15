@@ -11,7 +11,7 @@ will be sent over websocket connection. all order related messages are partner
 specific (i.e. you can't receive any of these messages for regular user or
 other partner orders)
 
-- ``BuyOrderPlacedMessage``, ``SellOrderPlacedMessage``
+- ``BuyOrderPlaced``, ``SellOrderPlaced``
     order was received by cryptology. ``closed_inline`` indicates
     order was fully executed immediately, it's safe not to expect (and therefore ignore
     following messages for this order, end of order lifecycle)
@@ -19,7 +19,7 @@ other partner orders)
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderPlacedMessage",
+            "_cls": "BuyOrderPlaced",
             "amount": "1",
             "closed_inline": false,
             "order_id": 1,
@@ -49,13 +49,13 @@ other partner orders)
             "client_order_id": 123
         }
 
-- ``BuyOrderCancelledMessage``, ``SellOrderCancelledMessage``
+- ``BuyOrderCancelled``, ``SellOrderCancelled``
     order was canceled (manual, TTL, IOC, FOK, tbd), end of order lifecycle
 
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderCancelledMessage",
+            "_cls": "BuyOrderCancelled",
             "order_id": 1,
             "time": [
                 946684800,
@@ -65,13 +65,13 @@ other partner orders)
             "client_order_id": 123
         }
 
-- ``BuyOrderClosedMessage``, ``SellOrderClosedMessage``
+- ``BuyOrderClosed``, ``SellOrderClosed``
     order was fully executed, end of order lifecycle
 
     .. code-block:: json
 
         {
-            "_cls": "BuyOrderClosedMessage",
+            "_cls": "BuyOrderClosed",
             "order_id": 1,
             "time": [
                 946684800,
@@ -84,13 +84,13 @@ other partner orders)
 Wallet
 ======
 
-- ``SetBalanceMessage``
+- ``SetBalance``
     sets new partner balance for given currency
 
     .. code-block:: json
 
         {
-            "_cls": "SetBalanceMessage",
+            "_cls": "SetBalance",
             "balance": "1",
             "change": "1",
             "currency": "USD",
@@ -105,13 +105,13 @@ Wallet
 General
 =======
 
-- ``AnonymousTradeMessage``
+- ``AnonymousTrade``
     indicates any trade that happens on cryptology with sensitive data removed
 
     .. code-block:: json
 
         {
-            "_cls": "AnonymousTradeMessage",
+            "_cls": "AnonymousTrade",
             "amount": "1",
             "maker_buy": false,
             "price": "1",
@@ -123,7 +123,7 @@ General
         }
 
 
-- ``OrderBookAggMessage``
+- ``OrderBookAgg``
     aggregated order book for given symbol, recalculated after each order book change
     (most likely will be throttled to reasonble interval in future). may have empty ``buy_levels``
     or ``sell_levels`` in case of empty order book. both levels dictionaries use price as key
@@ -132,7 +132,7 @@ General
     .. code-block:: json
 
         {
-            "_cls": "OrderBookAggMessage",
+            "_cls": "OrderBookAgg",
             "buy_levels": {
                 "1": "1"
             },

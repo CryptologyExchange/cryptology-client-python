@@ -41,12 +41,12 @@ all order placement messages share same structure
 Order cancelation
 =================
 
-- ``CancelOrderMessage``
+- ``CancelOrder``
     cancel any order
 
     .. code-block:: json
 
         {
-            "_cls": "CancelOrderMessage",
+            "_cls": "CancelOrder",
             "order_id": 42
         }

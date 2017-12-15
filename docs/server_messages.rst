@@ -105,22 +105,23 @@ Wallet
 General
 =======
 
-- ``AnonymousTrade``
-    indicates any trade that happens on cryptology with sensitive data removed
+..
+    - ``AnonymousTrade``
+        indicates any trade that happens on cryptology with sensitive data removed
 
-    .. code-block:: json
+        .. code-block:: json
 
-        {
-            "@type": "AnonymousTrade",
-            "amount": "1",
-            "maker_buy": false,
-            "price": "1",
-            "time": [
-                946684800,
-                0
-            ],
-            "trade_pair": "BTC_USD"
-        }
+            {
+                "@type": "AnonymousTrade",
+                "amount": "1",
+                "maker_buy": false,
+                "price": "1",
+                "time": [
+                    946684800,
+                    0
+                ],
+                "trade_pair": "BTC_USD"
+            }
 
 
 - ``OrderBookAgg``

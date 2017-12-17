@@ -7,10 +7,11 @@ Welcome to cryptology-client-python's documentation!
 ====================================================
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+    :maxdepth: 3
+    :caption: Contents:
 
-   installation
-   usage
-   client_messages
-   server_messages
+    protocol
+    installation
+    usage
+    client_messages
+    server_messages

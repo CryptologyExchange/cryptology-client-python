@@ -9,7 +9,7 @@ setup(
     name='cryptology-client-python',
     version='0.2.1',
     description='cryptology webscoket client',
-    author='Victor Kotseruba',
+    author='Cryptology',
     author_email='victor@cryptology.com',
     packages=['cryptology'],
     python_requires='>= 3.6',

@@ -115,3 +115,32 @@ where ``ORDER`` is incremental (but not necessarily sequential) value indicating
 message order on server and used by client to skip processed events on reconnect.
 ``TIMESTAMP`` indicates when particular event happened on server.
 Payload is described in :doc:`/server_messages`.
+
+Server also sends heartbeat messages (single zero byte) every 2 seconds, so client
+can decide if connection is still alive.
+
+
+Cryptography
+------------
+
+1. RSA
+    .. code-block:: python3
+
+        SIGNATURE_HASH = internal.SHA512()
+
+        SIGNATURE_PADDING = internal.PSS(
+            mgf=internal.MGF1(SIGNATURE_HASH),
+            salt_length=internal.PSS.MAX_LENGTH
+        )
+
+        ENCRYPTION_PADDING = internal.OAEP(
+            mgf=internal.MGF1(algorithm=internal.SHA1()),
+            algorithm=internal.SHA1(),
+            label=None
+        )
+
+
+3. AES
+    padding: ``PKCS7``
+
+    mode: ``CBC``

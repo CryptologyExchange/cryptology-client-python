@@ -10,9 +10,10 @@ from cryptography.hazmat.primitives.serialization import load_pem_private_key, l
 from . import internal
 from .exceptions import InvalidKey
 
-HASH = internal.SHA512()
+SIGNATURE_HASH = internal.SHA512()
+
 SIGNATURE_PADDING = internal.PSS(
-    mgf=internal.MGF1(HASH),
+    mgf=internal.MGF1(SIGNATURE_HASH),
     salt_length=internal.PSS.MAX_LENGTH
 )
 
@@ -90,11 +91,11 @@ class Keys:
 
     def sign(self, data: bytes) -> bytes:
         assert self.private is not None
-        return self.private.sign(data, SIGNATURE_PADDING, HASH)
+        return self.private.sign(data, SIGNATURE_PADDING, SIGNATURE_HASH)
 
     def verify(self, signature: bytes, data: bytes) -> None:
         try:
-            self.public.verify(signature, data, SIGNATURE_PADDING, HASH)
+            self.public.verify(signature, data, SIGNATURE_PADDING, SIGNATURE_HASH)
         except InvalidSignature:
             raise InvalidKey()
 

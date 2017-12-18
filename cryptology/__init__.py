@@ -42,37 +42,21 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         self.client_cipher = crypto.Cipher(self.symmetric_key)
 
     async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher]:
-        init = xdrlib.Packer()
-        init.pack_int(self.version)
-        init.pack_string(self.client_id.encode('utf-8'))
-        init.pack_hyper(last_seen_order)
-        await self._send_xdr(init)
+        packer = xdrlib.Packer()
+        packer.pack_bytes(self.client_id.encode('ascii'))
+        packer.pack_hyper(last_seen_order)
+        packer.pack_bytes(self.symmetric_key)
+        await self.send_bytes(self.server_keys.encrypt(packer.get_buffer()))
 
-        signature_request = await self._receive_xdr(timeout=3)
-        server_version = signature_request.unpack_int()
-        if server_version != self.version:
-            raise exceptions.IncompatibleVersion(f'server version {server_version}')
-        signature_data = signature_request.unpack_bytes()
+        response = await self.receive_bytes(timeout=3)
+        unpacker = xdrlib.Unpacker(self.client_keys.decrypt(response))
+        data_to_sign = unpacker.unpack_bytes()
+        last_seen_sequence = unpacker.unpack_hyper()
+        server_aes_key = unpacker.unpack_bytes()
 
-        signature = self.client_keys.sign(signature_data)
-        signature_response = xdrlib.Packer()
-        signature_response.pack_bytes(signature)
-        await self._send_xdr(signature_response)
+        await self.send_bytes(self.client_keys.sign(data_to_sign))
 
-        server_symmteric_key = await self._key_exchange()
-        server_cipher = crypto.Cipher(server_symmteric_key)
-
-        _, data = crypto.decrypt_and_verify(
-            self.server_keys, server_cipher, await self.receive_bytes(timeout=3))
-        xdr = xdrlib.Unpacker(data)
-        sequence_id = xdr.unpack_hyper()
-        return sequence_id, server_cipher
-
-    async def _key_exchange(self) -> bytes:
-        server_symmetric_key_encrypted = await self.receive_bytes(timeout=2)
-        server_symmetric_key = self.client_keys.decrypt(server_symmetric_key_encrypted)
-        await self.send_bytes(self.server_keys.encrypt(self.symmetric_key))
-        return server_symmetric_key
+        return last_seen_sequence, crypto.Cipher(server_aes_key)
 
     async def send_signed(self, *, sequence_id: int, payload: dict) -> None:
         xdr = xdrlib.Packer()
@@ -101,7 +85,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
             if data == b'\x00':
                 last_heartbeat = datetime.utcnow()
             else:
-                _, decrypted = crypto.decrypt_and_verify(self.server_keys, server_cipher, data)
+                decrypted = server_cipher.decrypt(data)
                 xdr = xdrlib.Unpacker(decrypted)
                 outbox_id = xdr.unpack_hyper()
                 ts = datetime.utcfromtimestamp(xdr.unpack_double())

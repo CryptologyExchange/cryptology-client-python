@@ -1,7 +1,7 @@
 import os
 import os.path
 import xdrlib
-from typing import Optional, Tuple
+from typing import Optional
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
@@ -112,12 +112,3 @@ def encrypt_and_sign(keys: Keys, cipher: Cipher, data: bytes) -> bytes:
     xdr.pack_bytes(keys.sign(data))
     xdr.pack_bytes(data)
     return cipher.encrypt(xdr.get_buffer())
-
-
-def decrypt_and_verify(keys: Keys, cipher: Cipher, encrypted: bytes) -> Tuple[bytes, bytes]:
-    raw = cipher.decrypt(encrypted)
-    xdr = xdrlib.Unpacker(raw)
-    signature = xdr.unpack_bytes()
-    data = xdr.unpack_bytes()
-    keys.verify(signature, data)
-    return raw, data

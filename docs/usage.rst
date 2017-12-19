@@ -19,9 +19,13 @@ Usage
                 sequence_id += 1
                 await ws.send_signed(
                     sequence_id=sequence_id,
-                    payload={'@type': 'PlaceBuyLimitOrder', 'trade_pair': 'BTC_USD',
-                             'amount': '2.3', 'price': '15000.1',
-                             'client_order_id': 123 + sequence_id}
+                    payload={'@type': 'PlaceBuyLimitOrder',
+                             'trade_pair': 'BTC_USD',
+                             'amount': '2.3',
+                             'price': '15000.1',
+                             'client_order_id': 123 + sequence_id,
+                             'ttl': 0
+                            }
                 )
 
         async def read_callback(order: int, ts: datetime, payload: dict) -> None:

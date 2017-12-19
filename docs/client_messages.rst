@@ -22,7 +22,7 @@ Order placement
 - ``PlaceSellFoKOrder``
     fill or kill ask
 
-- ``PlaceBuyIoCOrder``
+- ``PlaceSellIoCOrder``
     immediate or cancel ask
 
 all order placement messages share same structure
@@ -34,8 +34,13 @@ all order placement messages share same structure
         "trade_pair": "BTC_USD",
         "amount": "10.1",
         "price": "15000.3",
-        "client_order_id": 123
+        "client_order_id": 123,
+        "ttl": 0
     }
+
+``client_order_id`` is a tag to relate server messages to client ones.
+``ttl`` is time the order is valid for. Measured in seconds (with 1 minute granularity).
+0 means valid forever.
 
 
 Order cancelation

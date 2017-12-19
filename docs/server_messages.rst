@@ -6,10 +6,13 @@ Server messages
 Order lifecycle
 ===============
 
-after place order message is received by cryptology (TBD) following messages
-will be sent over websocket connection. all order related messages are partner
+After place order message is received by cryptology (TBD) following messages
+will be sent over websocket connection. All order related messages are partner
 specific (i.e. you can't receive any of these messages for regular user or
-other partner orders)
+other partner orders).
+The ``time`` parameter is a list of two integers. The first one is a UNIX
+timestamp in the UTC time zone. The second value is a number of microseconds.
+
 
 - ``BuyOrderPlaced``, ``SellOrderPlaced``
     order was received by cryptology. ``closed_inline`` indicates

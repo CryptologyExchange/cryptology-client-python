@@ -15,3 +15,4 @@ Welcome to cryptology-client-python's documentation!
     usage
     client_messages
     server_messages
+    RPC

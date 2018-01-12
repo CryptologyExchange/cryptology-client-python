@@ -39,6 +39,10 @@ class UnsupportedMessage(CryptologyProtocolError):
         self.msg = msg
 
 
+class UnsupportedMessageType(CryptologyProtocolError):
+    pass
+
+
 class CryptologyConnectionError(CryptologyError):
     pass
 

@@ -1,14 +1,13 @@
+import aiohttp
 import asyncio
 import functools
 import inspect
 import json
 import os
 import xdrlib
+
 from datetime import datetime
 from typing import Any, AsyncIterator, Awaitable, Callable, ClassVar, Optional, Tuple, Type, cast
-
-import aiohttp
-
 from . import common, crypto, exceptions, parallel
 
 __all__ = ('ClientReadCallback', 'ClientWriter', 'ClientWriterStub', 'run_client', 'Keys',)
@@ -27,6 +26,8 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
     server_keys: ClassVar[Keys]
     symmetric_key: bytes
     client_cipher: crypto.Cipher
+    rpc_requests: dict
+    rpc_completed: asyncio.Event
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kw = {}
@@ -40,6 +41,8 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         super(BaseProtocolClient, self).__init__(**kw)
         self.symmetric_key = os.urandom(32)
         self.client_cipher = crypto.Cipher(self.symmetric_key)
+        self.rpc_requests = dict()
+        self.rpc_completed = asyncio.Event()
 
     async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher]:
         packer = xdrlib.Packer()
@@ -58,11 +61,27 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
 
         return last_seen_sequence, crypto.Cipher(server_aes_key)
 
-    async def send_signed(self, *, sequence_id: int, payload: dict) -> None:
+    async def send_signed(self, *args, **kwargs) -> None:
+        return await self.send_signed_message(*args, **kwargs)
+
+    async def send_signed_message(self, *, sequence_id: int, payload: dict) -> None:
         xdr = xdrlib.Packer()
+        xdr.pack_enum(common.ClientMessageType.INBOX_MESSAGE.value)
         xdr.pack_hyper(sequence_id)
         xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
         await self.send_bytes(crypto.encrypt_and_sign(self.client_keys, self.client_cipher, xdr.get_buffer()))
+
+    async def send_signed_request(self, *, request_id: int, payload: dict) -> Any:
+        xdr = xdrlib.Packer()
+        xdr.pack_enum(common.ClientMessageType.RPC_REQUEST.value)
+        xdr.pack_hyper(request_id)
+        xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
+        await self.send_bytes(crypto.encrypt_and_sign(self.client_keys, self.client_cipher, xdr.get_buffer()))
+        while True:
+            await self.rpc_completed.wait()
+            self.rpc_completed.clear()
+            if request_id in self.rpc_requests:
+                return self.rpc_requests.pop(request_id)
 
     async def receive_iter(self, server_cipher: crypto.Cipher) -> AsyncIterator[Tuple[int, datetime, dict]]:
         last_heartbeat = datetime.utcnow()
@@ -87,10 +106,19 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
             else:
                 decrypted = server_cipher.decrypt(data)
                 xdr = xdrlib.Unpacker(decrypted)
-                outbox_id = xdr.unpack_hyper()
-                ts = datetime.utcfromtimestamp(xdr.unpack_double())
-                payload = json.loads(xdr.unpack_string().decode('utf-8'))
-                yield outbox_id, ts, payload
+                message_type: common.ServerMessageType = common.ServerMessageType.by_value(xdr.unpack_enum())
+                if message_type is common.ServerMessageType.OUTBOX_MESSAGE:
+                    outbox_id = xdr.unpack_hyper()
+                    ts = datetime.utcfromtimestamp(xdr.unpack_double())
+                    payload = json.loads(xdr.unpack_string().decode('utf-8'))
+                    yield outbox_id, ts, payload
+                elif message_type is common.ServerMessageType.RPC_RESPONSE:
+                    request_id = xdr.unpack_hyper()
+                    payload = json.loads(xdr.unpack_string().decode('utf-8'))
+                    self.rpc_requests[request_id] = payload
+                    self.rpc_completed.set()
+                else:
+                    raise exceptions.UnsupportedMessageType()
 
     async def receive_bytes(self, *, timeout: Optional[float] = None) -> bytes:
         msg = await self.receive(timeout=timeout)
@@ -134,14 +162,6 @@ class CryptologyClientSession(aiohttp.ClientSession):
             ws_response_class=bind_response_class(client_id, client_keys, server_keys))
 
 
-async def client_writer_loop(ws: BaseProtocolClient, client_id: str, sequence_id: int,
-                             *, loop: Optional[asyncio.AbstractEventLoop]) -> None:
-    while True:
-        await asyncio.sleep(5, loop=loop)
-        sequence_id += 1
-        await ws.send_signed(sequence_id=sequence_id, payload={'_cls': 'CreateAccountMessage', 'account_id': client_id})
-
-
 class ClientWriterStub:
     async def send_signed(self, *, sequence_id: int, payload: dict) -> None:
         pass
@@ -161,7 +181,7 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
 
             async def reader_loop():
                 async for outbox_id, ts, msg in ws.receive_iter(server_cipher):
-                    await read_callback(outbox_id, ts, msg)
+                    asyncio.ensure_future(read_callback(ws, outbox_id, ts, msg))
 
             await parallel.run_parallel((
                 reader_loop(),

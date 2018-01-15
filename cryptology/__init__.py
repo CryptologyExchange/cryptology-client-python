@@ -167,7 +167,7 @@ class ClientWriterStub:
         pass
 
 
-ClientReadCallback = Callable[[int, datetime, dict], Awaitable[None]]
+ClientReadCallback = Callable[[ClientWriterStub, int, datetime, dict], Awaitable[None]]
 ClientWriter = Callable[[ClientWriterStub, int], Awaitable[None]]
 
 

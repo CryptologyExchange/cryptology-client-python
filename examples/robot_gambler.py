@@ -64,7 +64,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
         await ws.send_signed(sequence_id=sequence_id, payload=msg)
 
 
-async def read_callback(order: int, ts: datetime, payload: dict) -> None:
+async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload: dict) -> None:
     logger.debug(f'received: {order}, {ts}, {payload}')
 
 
@@ -89,6 +89,8 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
             )
         except exceptions.HeartbeatError:
             logger.info('missed heartbeat')
+        except exceptions.Disconnected:
+            logger.exception('disconnect received')
 
 
 if __name__ == '__main__':

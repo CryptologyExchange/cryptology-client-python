@@ -55,11 +55,16 @@ Finally, client confirms key ownership by signing ``DATA TO SIGN`` with private 
 Messages
 --------
 
-Every client message includes ``SEQUENCE``, sequential value starting
+There are two types of client messages: Request Messages and RPC Messages.
+The type is determined by the ``MESSAGE TYPE`` field.
+Every request message includes ``SEQUENCE``, sequential value starting
 from ``LAST SEEN SEQUENCE`` provided by server during handshake. It also has
 rsa signature proving that given message is authorized by client. Aes is using
 session scoped ``CLIENT AES KEY`` generated during handshake.
 Payload is described in :doc:`/client_messages`.
+A RPC message has same structure except that ``SEQUENCE`` has to be unique only
+during current RPC request execution. The corresponding RPC response contains
+the same ``SEQUENCE`` as a reference.
 
 .. math::
     \scriptsize
@@ -85,22 +90,34 @@ Payload is described in :doc:`/client_messages`.
     \text{DATA} =
         \text{XDR}
         \Big[
+            \underbrace{\text{MESSAGE TYPE}}_\text{ENUM}
+            \quad
             \underbrace{\text{SEQUENCE}}_\text{HYPER}
             \quad
             \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
         \Big]
     \end{gather*}
 
-Every sever message has following shape:
+Every sever message has the following shape:
 
 
 .. math::
     \scriptsize
-    \Longleftarrow
-    \text{AES IV}
-    \quad
-    \text{AES}
-    \Bigg[
+    \begin{gather*}
+        \Longleftarrow
+        \text{AES IV}
+        \quad
+        \text{AES}
+        \Bigg[
+            \text{XDR}
+            \Big[
+                \underbrace{\text{MESSAGE TYPE}}_\text{ENUM}
+                \quad
+                \underbrace{\text{DATA}}_\text{BINARY}
+            \Big]
+        \Bigg]
+    \\
+    \text{MESSAGE DATA} =
         \text{XDR}
         \Big[
             \underbrace{\text{ORDER}}_\text{HYPER}
@@ -109,7 +126,15 @@ Every sever message has following shape:
             \quad
             \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
         \Big]
-    \Bigg]
+    \\
+    \text{RPC DATA} =
+        \text{XDR}
+        \Big[
+            \underbrace{\text{SEQUENCE}}_\text{HYPER}
+            \quad
+            \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
+        \Big]
+    \end{gather*}
 
 where ``ORDER`` is incremental (but not necessarily sequential) value indicating
 message order on server and used by client to skip processed events on reconnect.

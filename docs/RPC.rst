@@ -16,12 +16,9 @@ Usage example
 
         ...
         async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload: dict) -> None:
-            await ws.send_signed_request(payload={'@type': 'UserOrdersRequest'})
-
-        async def rpc_callback(ws: ClientWriterStub, payload: dict) -> None:
-            nonlocal sequence_id
-            if payload['@type'] == 'UserOrdersResponse':
-                pprint.pprint(payload)
+            rpc_response = await ws.send_signed_request(payload={'@type': 'UserOrdersRequest'})
+            if rpc_response['@type'] == 'UserOrdersResponse':
+                pprint.pprint(rpc_response)
 
         await run_client(
             client_id='test',
@@ -30,7 +27,6 @@ Usage example
             server_keys=server_keys,
             writer=writer,
             read_callback=read_callback,
-            rpc_callback=rpc_callback,
             last_seen_order=-1
         )
 

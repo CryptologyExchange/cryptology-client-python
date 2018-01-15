@@ -59,14 +59,14 @@ async def main():
             nonlocal sid
             nonlocal rid
             rid += 1
-            result = await ws.send_signed_request(request_id=rid, payload={'@type': 'UserOrdersRequest'})
-            pprint.pprint(result)
+            rpc_response = await ws.send_signed_request(request_id=rid, payload={'@type': 'UserOrdersRequest'})
+            pprint.pprint(rpc_response)
             if sid == -2:
                 return
-            if result['@type'] == 'UserOrdersResponse':
-                total_amount = sum(x.amount for x in iter_orders(result))
+            if rpc_response['@type'] == 'UserOrdersResponse':
+                total_amount = sum(x.amount for x in iter_orders(rpc_response))
                 if total_amount >= Decimal(3):
-                    for order in iter_orders(result):
+                    for order in iter_orders(rpc_response):
                         sid += 1
                         await ws.send_signed_message(sequence_id=sid, payload={'@type': 'CancelOrder', 'order_id': order.order_id})
 

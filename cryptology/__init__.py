@@ -144,7 +144,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                     raise exceptions.DuplicateClientOrderId()
                 elif msg.data == 1012:
                     raise exceptions.ServerRestart()
-            raise exceptions.Disconnected()
+            raise exceptions.Disconnected(msg.data)
 
 
 @functools.lru_cache(typed=True)

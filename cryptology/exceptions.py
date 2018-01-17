@@ -48,7 +48,8 @@ class CryptologyConnectionError(CryptologyError):
 
 
 class Disconnected(CryptologyConnectionError):
-    pass
+    def __init__(self, code: int):
+        super().__init__(f'disconnected with code {code}')
 
 
 class ConcurrentConnection(CryptologyConnectionError):

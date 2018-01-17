@@ -87,9 +87,10 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
                 loop=loop
             )
         except exceptions.HeartbeatError:
-            logger.info('missed heartbeat')
-        except exceptions.Disconnected:
-            logger.exception('disconnect received')
+            logger.error('missed heartbeat')
+        except exceptions.Disconnected as ex:
+            logger.error(ex)
+            await asyncio.sleep(20)
 
 
 if __name__ == '__main__':

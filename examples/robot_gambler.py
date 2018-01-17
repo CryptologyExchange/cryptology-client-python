@@ -42,7 +42,6 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
         })
 
     while True:
-        await asyncio.sleep(random.randrange(1, 30))  # sleep from 1 to 30 seconds between trades
         sequence_id += 1
         buy = random.choice([True, False])
         # use up to 0.1 of each currency in trades
@@ -58,10 +57,10 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
             '@type': 'PlaceBuyFoKOrder' if buy else 'PlaceSellFoKOrder',
             'trade_pair': trade_pair,
             'amount': str(amount),
-            'price': '1000000000' if buy else '0',
-            'client_order_id': sequence_id,
+            'price': '1000000000' if buy else '0.00000001',
         }
         await ws.send_signed(sequence_id=sequence_id, payload=msg)
+        await asyncio.sleep(random.randrange(1, 30))  # sleep from 1 to 30 seconds between trades
 
 
 async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload: dict) -> None:

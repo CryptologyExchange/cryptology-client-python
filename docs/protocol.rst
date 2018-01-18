@@ -62,9 +62,9 @@ from ``LAST SEEN SEQUENCE`` provided by server during handshake. It also has
 rsa signature proving that given message is authorized by client. Aes is using
 session scoped ``CLIENT AES KEY`` generated during handshake.
 Payload is described in :doc:`/client_messages`.
-A RPC message has same structure except that ``SEQUENCE`` has to be unique only
+A RPC message has same structure except that ``REQUEST_ID`` has to be unique only
 during current RPC request execution. The corresponding RPC response contains
-the same ``SEQUENCE`` as a reference.
+the same ``REQUEST_ID`` as a reference.
 
 .. math::
     \scriptsize
@@ -83,16 +83,24 @@ the same ``SEQUENCE`` as a reference.
                     \Big]
                 }_\text{BINARY}
                 \quad
+                \underbrace{\text{MESSAGE TYPE}}_\text{ENUM}
+                \quad
                 \underbrace{\text{DATA}}_\text{BINARY}
             \bigg]
         \Bigg]
     \\
-    \text{DATA} =
+    \text{MESSAGE DATA} =
         \text{XDR}
         \Big[
-            \underbrace{\text{MESSAGE TYPE}}_\text{ENUM}
-            \quad
             \underbrace{\text{SEQUENCE}}_\text{HYPER}
+            \quad
+            \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
+        \Big]
+    \\
+    \text{RPC DATA} =
+        \text{XDR}
+        \Big[
+            \underbrace{\text{REQUEST_ID}}_\text{HYPER}
             \quad
             \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
         \Big]
@@ -140,6 +148,7 @@ where ``ORDER`` is incremental (but not necessarily sequential) value indicating
 message order on server and used by client to skip processed events on reconnect.
 ``TIMESTAMP`` indicates when particular event happened on server.
 Payload is described in :doc:`/server_messages`.
+The ``REQUEST_ID`` field in the ``RPC`` response messages has the same value as in the request.
 
 Server also sends heartbeat messages (single zero byte) every 2 seconds, so client
 can decide if connection is still alive.

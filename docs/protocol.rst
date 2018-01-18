@@ -62,7 +62,7 @@ from ``LAST SEEN SEQUENCE`` provided by server during handshake. It also has
 rsa signature proving that given message is authorized by client. Aes is using
 session scoped ``CLIENT AES KEY`` generated during handshake.
 Payload is described in :doc:`/client_messages`.
-A RPC message has same structure except that ``REQUEST_ID`` has to be unique only
+A RPC message has similar structure except that ``REQUEST_ID`` has to be unique only
 during current RPC request execution. The corresponding RPC response contains
 the same ``REQUEST_ID`` as a reference.
 
@@ -138,7 +138,7 @@ Every sever message has the following shape:
     \text{RPC DATA} =
         \text{XDR}
         \Big[
-            \underbrace{\text{SEQUENCE}}_\text{HYPER}
+            \underbrace{\text{REQUEST_ID}}_\text{HYPER}
             \quad
             \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
         \Big]

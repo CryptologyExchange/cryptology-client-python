@@ -4,11 +4,10 @@ import os
 import pprint
 
 from collections import namedtuple
-from cryptology import ClientWriterStub, Keys, run_client
+from cryptology import ClientWriterStub, Keys, run_client, exceptions
 from datetime import datetime
 from decimal import Decimal
 from typing import Iterable
-
 
 SERVER = os.getenv('SERVER', 'ws://127.0.0.1:8080')
 Order = namedtuple('Order', ('order_id', 'amount', 'price', 'client_order_id'))
@@ -70,15 +69,19 @@ async def main():
                         sid += 1
                         await ws.send_signed_message(sequence_id=sid, payload={'@type': 'CancelOrder', 'order_id': order.order_id})
 
-    await run_client(
-        client_id='test',
-        client_keys=client_keys,
-        ws_addr=SERVER,
-        server_keys=server_keys,
-        writer=writer,
-        read_callback=read_callback,
-        last_seen_order=-1
-    )
+    while True:
+        try:
+            await run_client(
+                client_id='test',
+                client_keys=client_keys,
+                ws_addr=SERVER,
+                server_keys=server_keys,
+                writer=writer,
+                read_callback=read_callback,
+                last_seen_order=0
+            )
+        except exceptions.ServerRestart:
+            asyncio.sleep(60)
 
 
 if __name__ == '__main__':

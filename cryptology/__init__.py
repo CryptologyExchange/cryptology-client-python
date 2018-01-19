@@ -173,7 +173,7 @@ ClientWriter = Callable[[ClientWriterStub, int], Awaitable[None]]
 
 async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_keys: Keys,
                      read_callback: ClientReadCallback, writer: ClientWriter,
-                     last_seen_order: int,
+                     last_seen_order: int = 0,
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
         async with session.ws_connect(ws_addr) as ws:

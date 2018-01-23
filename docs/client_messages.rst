@@ -55,3 +55,12 @@ Order cancelation
             "@type": "CancelOrder",
             "order_id": 42
         }
+
+- ``CancelAllOrders``
+    cancel all active orders opened by the client
+
+    .. code-block:: json
+
+        {
+            "@type": "CancelAllOrders"
+        }

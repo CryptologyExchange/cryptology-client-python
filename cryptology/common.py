@@ -29,3 +29,4 @@ class ClientMessageType(ByValue):
 class ServerMessageType(ByValue):
     OUTBOX_MESSAGE = 1
     RPC_RESPONSE = 2
+    ERROR_MESSAGE = 3

@@ -117,6 +117,9 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                     payload = json.loads(xdr.unpack_string().decode('utf-8'))
                     self.rpc_requests[request_id] = payload
                     self.rpc_completed.set()
+                elif message_type is common.ServerMessageType.ERROR_MESSAGE:
+                    message = xdr.unpack_string().decode('utf-8')
+                    raise exceptions.CryptologyError(message)
                 else:
                     raise exceptions.UnsupportedMessageType()
 

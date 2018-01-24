@@ -142,13 +142,28 @@ Every sever message has the following shape:
             \quad
             \underbrace{\text{JSON MESSAGE}}_\text{BINARY}
         \Big]
+    \\
+    \text{ERROR_MESSAGE} =
+        \text{XDR}
+        \Big[
+            \underbrace{\text{MESSAGE}}_\text{BINARY}
+        \Big]
     \end{gather*}
 
-where ``ORDER`` is incremental (but not necessarily sequential) value indicating
-message order on server and used by client to skip processed events on reconnect.
-``TIMESTAMP`` indicates when particular event happened on server.
-Payload is described in :doc:`/server_messages`.
-The ``REQUEST_ID`` field in the ``RPC`` response messages has the same value as in the request.
+where ``MESSAGE TYPE`` determines payload type:
+
+- MESSAGE payload
+   ``ORDER`` is incremental (but not necessarily sequential) value indicating
+   message order on server and used by client to skip processed events on reconnect.
+   ``TIMESTAMP`` indicates when particular event happened on server.
+   Payload is described in :doc:`/server_messages`.
+
+- RPC payload
+   The ``REQUEST_ID`` field in the ``RPC`` response messages has the same value as in the request.
+
+- ERROR message
+   Contains text description of the error in recent client messages.
+   Followed by disconnect with error code.
 
 Server also sends heartbeat messages (single zero byte) every 2 seconds, so client
 can decide if connection is still alive.

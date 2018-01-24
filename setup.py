@@ -7,11 +7,11 @@ if sys.version_info < (3, 6):
 
 setup(
     name='cryptology-client-python',
-    version='0.3.2',
+    version='0.3.3',
     description='cryptology webscoket client',
     author='Cryptology',
     author_email='victor@cryptology.com',
-    packages=['cryptology'],
+    packages=['cryptology', 'examples'],
     python_requires='>= 3.6',
     install_requires=[
         'aiohttp >= 2.3.6',

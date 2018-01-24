@@ -104,6 +104,17 @@ Wallet
             ]
         }
 
+- ``InsufficientFunds``
+    indicates that the account doesn't have enough funds to place the order
+
+    .. code-block:: json
+
+        {
+            "@type": "InsufficientFunds",
+            "order_id": 1,
+            "currency": "USD"
+        }
+
 
 General
 =======

@@ -84,6 +84,16 @@ timestamp in the UTC time zone. The second value is a number of microseconds.
             "client_order_id": 123
         }
 
+- ``OrderNotFound``
+    attempt to cancel a non-existing order was made
+
+    .. code-block:: json
+
+        {
+            "@type": "OrderNotFound",
+            "order_id": 1
+        }
+
 Wallet
 ======
 

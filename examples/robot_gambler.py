@@ -3,6 +3,7 @@ import logging
 import os
 import random
 
+from aiohttp import WSServerHandshakeError
 from cryptology import ClientWriterStub, Keys, run_client, exceptions
 from datetime import datetime
 from decimal import Context
@@ -44,9 +45,8 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
     while True:
         sequence_id += 1
         buy = random.choice([True, False])
-        # use up to 0.1 of each currency in trades
-        amount = Context(prec=4).create_decimal_from_float(random.random() * 0.1 + 0.00001)
-        trade_pair = random.choice(('BTC_USD', 'ETH_USD',))
+        amount = Context(prec=4).create_decimal_from_float(random.random() * 0.001 + 0.000000001)
+        trade_pair = random.choice(('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD',))
 
         if buy:
             logger.info(f'buying {amount} of {trade_pair}')
@@ -60,7 +60,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
             'price': '1000000000' if buy else '0.00000001',
         }
         await ws.send_signed(sequence_id=sequence_id, payload=msg)
-        await asyncio.sleep(random.randrange(1, 30))  # sleep from 1 to 30 seconds between trades
+        await asyncio.sleep(0.35)
 
 
 async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload: dict) -> None:
@@ -88,9 +88,12 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
             )
         except exceptions.HeartbeatError:
             logger.error('missed heartbeat')
-        except exceptions.Disconnected as ex:
+        except exceptions.ServerRestart:
+            logger.warning('server restart')
+            await asyncio.sleep(80)
+        except (exceptions.Disconnected, WSServerHandshakeError) as ex:
             logger.error(ex)
-            await asyncio.sleep(20)
+            await asyncio.sleep(30)
 
 
 if __name__ == '__main__':

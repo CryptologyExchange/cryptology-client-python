@@ -6,7 +6,7 @@ import random
 from aiohttp import WSServerHandshakeError
 from cryptology import ClientWriterStub, Keys, run_client, exceptions
 from datetime import datetime
-from decimal import Context, ROUND_DOWN
+from decimal import Context, ROUND_DOWN, Decimal
 from pathlib import Path
 from typing import Optional
 
@@ -24,7 +24,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
         buy = random.choice([True, False])
         context = Context(prec=8, rounding=ROUND_DOWN)
         amount = context.create_decimal_from_float(random.random() * 0.001 + 0.00000001)
-        amount = str(amount)[:10]
+        amount = amount.quantize(Decimal(10) ** -8)
         trade_pair = random.choice(('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD',))
 
         if buy:

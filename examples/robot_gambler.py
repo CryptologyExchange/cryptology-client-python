@@ -6,7 +6,7 @@ import random
 from aiohttp import WSServerHandshakeError
 from cryptology import ClientWriterStub, Keys, run_client, exceptions
 from datetime import datetime
-from decimal import Context
+from decimal import Context, ROUND_DOWN
 from pathlib import Path
 from typing import Optional
 
@@ -19,33 +19,12 @@ logger = logging.getLogger(NAME)
 
 
 async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
-    if sequence_id == -1:
-        logger.info('creating account')
-        sequence_id += 1
-        await ws.send_signed(sequence_id=sequence_id, payload={'@type': 'CreateAccount'})
-        sequence_id += 1
-        await ws.send_signed(sequence_id=sequence_id, payload={
-            '@type': 'DepositFunds',
-            'currency': 'USD',
-            'amount': '1000000000'
-        })
-        sequence_id += 1
-        await ws.send_signed(sequence_id=sequence_id, payload={
-            '@type': 'DepositFunds',
-            'currency': 'BTC',
-            'amount': '1000000'
-        })
-        sequence_id += 1
-        await ws.send_signed(sequence_id=sequence_id, payload={
-            '@type': 'DepositFunds',
-            'currency': 'ETH',
-            'amount': '1000000'
-        })
-
     while True:
         sequence_id += 1
         buy = random.choice([True, False])
-        amount = Context(prec=4).create_decimal_from_float(random.random() * 0.001 + 0.000000001)
+        context = Context(prec=8, rounding=ROUND_DOWN)
+        amount = context.create_decimal_from_float(random.random() * 0.001 + 0.00000001)
+        amount = str(amount)[:10]
         trade_pair = random.choice(('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD',))
 
         if buy:
@@ -60,7 +39,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
             'price': '1000000000' if buy else '0.00000001',
         }
         await ws.send_signed(sequence_id=sequence_id, payload=msg)
-        await asyncio.sleep(0.35)
+        await asyncio.sleep(0.25)
 
 
 async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload: dict) -> None:

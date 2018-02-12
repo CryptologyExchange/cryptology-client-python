@@ -128,7 +128,7 @@ Every sever message has the following shape:
     \text{MESSAGE DATA} =
         \text{XDR}
         \Big[
-            \underbrace{\text{ORDER}}_\text{HYPER}
+            \underbrace{\text{TRANSACTION ID}}_\text{HYPER}
             \quad
             \underbrace{\text{TIMESTAMP}}_\text{DOUBLE}
             \quad
@@ -153,7 +153,7 @@ Every sever message has the following shape:
 where ``MESSAGE TYPE`` determines payload type:
 
 - MESSAGE payload
-   ``ORDER`` is incremental (but not necessarily sequential) value indicating
+   ``TRANSACTION ID`` is incremental (but not necessarily sequential) value indicating
    message order on server and used by client to skip processed events on reconnect.
    ``TIMESTAMP`` indicates when particular event happened on server.
    Payload is described in :doc:`/server_messages`.

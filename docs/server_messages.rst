@@ -147,6 +147,24 @@ General
                 "trade_pair": "BTC_USD"
             }
 
+    - ``OwnTrade``
+        sent when the account participated in a deal on either side.
+
+        .. code-block:: json
+
+            {
+                "@type": "OwnTrade",
+                "time": [
+                    946684800,
+                    0
+                ],
+                "trade_pair": "BTC_USD",
+                "amount": "1",
+                "price": "1",
+                "maker": true,
+                "maker_buy": false,
+            }
+
 
 - ``OrderBookAgg``
     aggregated order book for given symbol, recalculated after each order book change

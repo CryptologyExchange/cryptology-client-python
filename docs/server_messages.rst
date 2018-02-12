@@ -163,6 +163,7 @@ General
                 "price": "1",
                 "maker": true,
                 "maker_buy": false,
+                "order_id": int,
             }
 
 

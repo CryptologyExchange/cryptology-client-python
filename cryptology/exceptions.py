@@ -1,6 +1,6 @@
-from datetime import datetime
-
 import aiohttp
+from cryptology.common import CLOSE_MESSAGES
+from datetime import datetime
 
 
 class CryptologyError(Exception):
@@ -69,3 +69,17 @@ class HeartbeatError(CryptologyConnectionError):
                                              f', last seen {last_seen} now {now}')
         self.last_seen = last_seen
         self.now = now
+
+
+def handle_close_message(msg: aiohttp.WSMessage) -> None:
+    if msg.type in CLOSE_MESSAGES:
+        if msg.type == aiohttp.WSMsgType.CLOSE:
+            if msg.data == 4000:
+                raise ConcurrentConnection()
+            elif msg.data == 4001:
+                raise InvalidSequence()
+            elif msg.data == 4002:
+                raise DuplicateClientOrderId()
+            elif msg.data == 1012:
+                raise ServerRestart()
+        raise Disconnected(msg.data)

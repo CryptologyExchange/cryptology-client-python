@@ -33,6 +33,7 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
         try:
             await cryptology.run_market_data(
                 ws_addr=SERVER,
+                market_data_callback=None,
                 order_book_callback=read_order_book,
                 trades_callback=read_trades,
                 loop=loop

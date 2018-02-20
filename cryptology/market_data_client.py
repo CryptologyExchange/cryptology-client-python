@@ -24,7 +24,7 @@ async def receive_msg(ws, *, timeout: Optional[float] = None) -> bytes:
     return msg.data
 
 
-async def reader_loop(ws, order_book_callback, trades_callback):
+async def reader_loop(ws, market_data_callback, order_book_callback, trades_callback):
     msg = await receive_msg(ws, timeout=3)
     xdr = xdrlib.Unpacker(msg)
     version = xdr.unpack_uint()
@@ -55,21 +55,25 @@ async def reader_loop(ws, order_book_callback, trades_callback):
             if message_type != common.ServerMessageType.BROADCAST_MESSAGE:
                 raise exceptions.UnsupportedMessageType()
             payload = json.loads(xdr.unpack_string().decode())
+            if market_data_callback is not None:
+                await market_data_callback(payload)
             if payload['@type'] == 'OrderBookAgg':
-                await order_book_callback(
-                    payload['current_order_id'],
-                    payload['trade_pair'],
-                    payload['buy_levels'],
-                    payload['sell_levels']
-                )
+                if order_book_callback is not None:
+                    await order_book_callback(
+                        payload['current_order_id'],
+                        payload['trade_pair'],
+                        payload['buy_levels'],
+                        payload['sell_levels']
+                    )
             elif payload['@type'] == 'AnonymousTrade':
-                await trades_callback(
-                    datetime.utcfromtimestamp(payload['time'][0]),
-                    payload['current_order_id'],
-                    payload['trade_pair'],
-                    Decimal(payload['amount']),
-                    Decimal(payload['price'])
-                )
+                if trades_callback is not None:
+                    await trades_callback(
+                        datetime.utcfromtimestamp(payload['time'][0]),
+                        payload['current_order_id'],
+                        payload['trade_pair'],
+                        Decimal(payload['amount']),
+                        Decimal(payload['price'])
+                    )
             else:
                 raise exceptions.UnsupportedMessageType()
         except (KeyError, ValueError, exceptions.UnsupportedMessageType):
@@ -77,8 +81,8 @@ async def reader_loop(ws, order_book_callback, trades_callback):
             raise exceptions.CryptologyError('failed to decode data')
 
 
-async def run(*, ws_addr: str, order_book_callback, trades_callback,
+async def run(*, ws_addr: str, market_data_callback=None, order_book_callback=None, trades_callback=None,
               loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with aiohttp.ClientSession(loop=loop) as session:
         async with session.ws_connect(ws_addr) as ws:
-            await reader_loop(ws, order_book_callback, trades_callback)
+            await reader_loop(ws, market_data_callback, order_book_callback, trades_callback)

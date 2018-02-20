@@ -56,10 +56,16 @@ async def reader_loop(ws, order_book_callback, trades_callback):
                 raise exceptions.UnsupportedMessageType()
             payload = json.loads(xdr.unpack_string().decode())
             if payload['@type'] == 'OrderBookAgg':
-                await order_book_callback(payload['trade_pair'], payload['buy_levels'], payload['sell_levels'])
+                await order_book_callback(
+                    payload['current_order_id'],
+                    payload['trade_pair'],
+                    payload['buy_levels'],
+                    payload['sell_levels']
+                )
             elif payload['@type'] == 'AnonymousTrade':
                 await trades_callback(
                     datetime.utcfromtimestamp(payload['time'][0]),
+                    payload['current_order_id'],
                     payload['trade_pair'],
                     Decimal(payload['amount']),
                     Decimal(payload['price'])

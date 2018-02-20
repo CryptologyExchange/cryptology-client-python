@@ -9,21 +9,21 @@ from pathlib import Path
 from typing import Optional
 
 
-SERVER = os.getenv('SERVER', 'ws://127.0.0.1:8081')
+SERVER = os.getenv('SERVER', 'ws://127.0.0.1:8080')
 NAME = Path(__file__).stem
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(NAME)
 
 
-async def read_order_book(pair: str, buy: dict, sell: dict) -> None:
-    logger.info(f'sell orders of {pair}: {sell}')
-    logger.info(f'buy orders of {pair}: {buy}')
+async def read_order_book(order_id: int, pair: str, buy: dict, sell: dict) -> None:
+    logger.info(f'sell orders of {pair} @{order_id}: {sell}')
+    logger.info(f'buy orders of {pair} @{order_id}: {buy}')
 
 
-async def read_trades(ts: datetime, pair: str, amount: Decimal, price: Decimal) -> None:
+async def read_trades(ts: datetime, order_id: int, pair: str, amount: Decimal, price: Decimal) -> None:
     currencies = pair.split("_")
-    logger.info(f'{ts} a buy of {amount} {currencies[0]} for {price} {currencies[1]} took place')
+    logger.info(f'{ts}@{order_id} a buy of {amount} {currencies[0]} for {price} {currencies[1]} took place')
 
 
 async def main(loop: Optional[asyncio.AbstractEventLoop] = None):

@@ -7,24 +7,33 @@ import xdrlib
 from cryptology import exceptions, common
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Callable, Awaitable
 
 __all__ = ('run',)
 
 logger = logging.getLogger(__name__)
 
 
-async def receive_msg(ws, *, timeout: Optional[float] = None) -> bytes:
+async def receive_msg(ws: aiohttp.ClientWebSocketResponse, *, timeout: Optional[float] = None) -> bytes:
     msg = await ws.receive(timeout=timeout)
-    logger.debug('received msg: ', str(msg))
     if msg.type != aiohttp.WSMsgType.BINARY:
         logger.info('close msg received')
         exceptions.handle_close_message(msg)
         raise exceptions.UnsupportedMessage(msg)
+    logger.debug('received message %s', msg.data)
     return msg.data
 
 
-async def reader_loop(ws, market_data_callback, order_book_callback, trades_callback):
+MarketDataCallback = Callable[[dict], Awaitable[None]]
+OrderBookCallback = Callable[[int, str, dict, dict], Awaitable[None]]
+TradesCallback = Callable[[datetime, int, str, Decimal, Decimal], Awaitable[None]]
+
+
+async def reader_loop(
+        ws: aiohttp.ClientWebSocketResponse,
+        market_data_callback: MarketDataCallback,
+        order_book_callback: OrderBookCallback,
+        trades_callback: TradesCallback) -> None:
     msg = await receive_msg(ws, timeout=3)
     xdr = xdrlib.Unpacker(msg)
     version = xdr.unpack_uint()
@@ -81,8 +90,10 @@ async def reader_loop(ws, market_data_callback, order_book_callback, trades_call
             raise exceptions.CryptologyError('failed to decode data')
 
 
-async def run(*, ws_addr: str, market_data_callback=None, order_book_callback=None, trades_callback=None,
-              loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
+async def run(*, ws_addr: str, market_data_callback: MarketDataCallback = None,
+              order_book_callback: OrderBookCallback = None,
+              trades_callback: TradesCallback = None,
+              loop: Optional[asyncio.AbstractEventLoop] = Awaitable[None]) -> None:
     async with aiohttp.ClientSession(loop=loop) as session:
         async with session.ws_connect(ws_addr) as ws:
             await reader_loop(ws, market_data_callback, order_book_callback, trades_callback)

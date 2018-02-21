@@ -48,7 +48,7 @@ class CryptologyConnectionError(CryptologyError):
 
 
 class Disconnected(CryptologyConnectionError):
-    def __init__(self, code: int):
+    def __init__(self, code: int) -> None:
         super().__init__(f'disconnected with code {code}')
 
 

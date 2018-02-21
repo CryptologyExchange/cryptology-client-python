@@ -162,7 +162,7 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
         async with session.ws_connect(ws_addr) as ws:
             sequence_id, server_cipher = await ws.handshake(last_seen_order)
 
-            async def reader_loop():
+            async def reader_loop() -> None:
                 async for outbox_id, ts, msg in ws.receive_iter(server_cipher):
                     asyncio.ensure_future(read_callback(ws, outbox_id, ts, msg))
 

@@ -53,9 +53,11 @@ async def reader_loop(
         try:
             msg = await receive_msg(ws, timeout=receive_timeout)
         except asyncio.TimeoutError:
+            logger.warning('missed heartbeat')
             raise exceptions.HeartbeatError(last_heartbeat, datetime.utcnow())
 
         if msg == b'\x00':
+            logger.debug('heartbeat')
             last_heartbeat = datetime.utcnow()
             continue
         try:
@@ -68,21 +70,21 @@ async def reader_loop(
                 await market_data_callback(payload)
             if payload['@type'] == 'OrderBookAgg':
                 if order_book_callback is not None:
-                    await order_book_callback(
+                    asyncio.ensure_future(order_book_callback(
                         payload['current_order_id'],
                         payload['trade_pair'],
                         payload['buy_levels'],
                         payload['sell_levels']
-                    )
+                    ))
             elif payload['@type'] == 'AnonymousTrade':
                 if trades_callback is not None:
-                    await trades_callback(
+                    asyncio.ensure_future(trades_callback(
                         datetime.utcfromtimestamp(payload['time'][0]),
                         payload['current_order_id'],
                         payload['trade_pair'],
                         Decimal(payload['amount']),
                         Decimal(payload['price'])
-                    )
+                    ))
             else:
                 raise exceptions.UnsupportedMessageType()
         except (KeyError, ValueError, exceptions.UnsupportedMessageType):

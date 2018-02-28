@@ -25,7 +25,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
         context = Context(prec=8, rounding=ROUND_DOWN)
         amount = context.create_decimal_from_float(random.random() * 0.001 + 0.00000001)
         amount = amount.quantize(Decimal(10) ** -8)
-        trade_pair = random.choice(('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD',))
+        trade_pair = random.choice(('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD', 'BTC_EUR', 'ETH_EUR', 'BCH_EUR', 'LTC_EUR',))
 
         if buy:
             logger.info(f'buying {amount} of {trade_pair}')
@@ -39,7 +39,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
             'price': '1000000000' if buy else '0.00000001',
         }
         await ws.send_signed(sequence_id=sequence_id, payload=msg)
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.19)
 
 
 async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload: dict) -> None:

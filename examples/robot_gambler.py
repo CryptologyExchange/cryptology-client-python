@@ -38,7 +38,7 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
             'amount': str(amount),
             'price': '1000000000' if buy else '0.00000001',
         }
-        await ws.send_signed(sequence_id=sequence_id, payload=msg)
+        await ws.send_signed_message(sequence_id=sequence_id, payload=msg)
         await asyncio.sleep(0.19)
 
 

@@ -88,7 +88,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
     async def receive_iter(self, server_cipher: crypto.Cipher) -> AsyncIterator[Tuple[int, datetime, dict]]:
         last_heartbeat = datetime.utcnow()
         while True:
-            next_heartbeat = last_heartbeat + common.HEARTBEAT_INTERVAL * 1.5
+            next_heartbeat = last_heartbeat + common.HEARTBEAT_INTERVAL * 2.1
 
             receive_timeout = (next_heartbeat - datetime.utcnow()).total_seconds()
 
@@ -99,7 +99,6 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
 
             try:
                 data = await receive_msg(self, timeout=receive_timeout)
-
             except asyncio.TimeoutError:
                 raise exceptions.HeartbeatError(last_heartbeat, datetime.utcnow())
 
@@ -121,6 +120,8 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                     self.rpc_completed.set()
                 elif message_type is common.ServerMessageType.ERROR_MESSAGE:
                     message = xdr.unpack_string().decode('utf-8')
+                    if message == 'TimeoutError()':
+                        raise exceptions.HeartbeatError(datetime.utcnow(), datetime.utcnow())
                     raise exceptions.CryptologyError(message)
                 else:
                     raise exceptions.UnsupportedMessageType()
@@ -147,6 +148,12 @@ class CryptologyClientSession(aiohttp.ClientSession):
 
 class ClientWriterStub:
     async def send_signed(self, *, sequence_id: int, payload: dict) -> None:
+        pass
+
+    async def send_signed_message(self, *, sequence_id: int, payload: dict) -> None:
+        pass
+
+    async def send_signed_request(self, *, request_id: int, payload: dict) -> Any:
         pass
 
 

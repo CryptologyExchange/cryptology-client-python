@@ -42,7 +42,7 @@ async def reader_loop(
         raise exceptions.IncompatibleVersion()
     last_heartbeat = datetime.utcnow()
     while True:
-        next_heartbeat = last_heartbeat + common.HEARTBEAT_INTERVAL * 1.5
+        next_heartbeat = last_heartbeat + common.HEARTBEAT_INTERVAL * 2.1
         receive_timeout = (next_heartbeat - datetime.utcnow()).total_seconds()
 
         # if handling message took too long we should already have

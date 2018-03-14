@@ -20,7 +20,6 @@ async def receive_msg(ws: aiohttp.ClientWebSocketResponse, *, timeout: Optional[
         logger.info('close msg received')
         exceptions.handle_close_message(msg)
         raise exceptions.UnsupportedMessage(msg)
-    logger.debug('received message %s', msg.data)
     return msg.data
 
 

@@ -70,7 +70,7 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
         except exceptions.ServerRestart:
             logger.warning('server restart')
             await asyncio.sleep(80)
-        except (exceptions.Disconnected, WSServerHandshakeError) as ex:
+        except (exceptions.CryptologyConnectionError, WSServerHandshakeError) as ex:
             logger.error(ex)
             await asyncio.sleep(30)
 

@@ -67,6 +67,8 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         return await self.send_signed_message(*args, **kwargs)
 
     async def send_signed_message(self, *, sequence_id: int, payload: dict) -> None:
+        if self.closed:  # TODO: it's a hack. Fix the closing issue legally.
+            raise exceptions.CryptologyConnectionError()
         xdr = xdrlib.Packer()
         xdr.pack_enum(common.ClientMessageType.INBOX_MESSAGE.value)
         xdr.pack_hyper(sequence_id)

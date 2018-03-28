@@ -12,11 +12,16 @@ from typing import Optional
 SERVER = os.getenv('SERVER', 'ws://127.0.0.1:8080')
 NAME = Path(__file__).stem
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(NAME)
 
 
 async def read_order_book(order_id: int, pair: str, buy: dict, sell: dict) -> None:
+    if pair in ('BTC_USD', 'ETH_USD', 'BTC_EUR', 'ETH_EUR',):
+        if len(buy) == 0:
+            logger.error('%s buy order book has size %i @ order %i', pair, len(buy), order_id)
+        if len(sell) == 0:
+            logger.error('%s sell order book has size %i @ order %i', pair, len(sell), order_id)
     logger.info(f'sell orders of {pair} @{order_id}: {sell}')
     logger.info(f'buy orders of {pair} @{order_id}: {buy}')
 

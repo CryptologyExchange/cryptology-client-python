@@ -3,7 +3,7 @@ import logging
 import os
 import random
 
-from aiohttp import WSServerHandshakeError
+from aiohttp import WSServerHandshakeError, ClientConnectorError
 from cryptology import ClientWriterStub, Keys, run_client, exceptions
 from datetime import datetime
 from decimal import Context, ROUND_DOWN, Decimal
@@ -25,7 +25,9 @@ async def writer(ws: ClientWriterStub, sequence_id: int) -> None:
         context = Context(prec=8, rounding=ROUND_DOWN)
         amount = context.create_decimal_from_float(random.random() * 0.001 + 0.00000001)
         amount = amount.quantize(Decimal(10) ** -8)
-        trade_pair = random.choice(('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD', 'BTC_EUR', 'ETH_EUR', 'BCH_EUR', 'LTC_EUR',))
+        trade_pair = random.choice(
+            ('BTC_USD', 'ETH_USD', 'BCH_USD', 'LTC_USD', 'BTC_EUR', 'ETH_EUR', 'BCH_EUR', 'LTC_EUR', 'ETH_BTC',)
+        )
 
         if buy:
             logger.info(f'buying {amount} of {trade_pair}')
@@ -70,7 +72,7 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
         except exceptions.ServerRestart:
             logger.warning('server restart')
             await asyncio.sleep(80)
-        except (exceptions.CryptologyConnectionError, WSServerHandshakeError) as ex:
+        except (exceptions.CryptologyConnectionError, ClientConnectorError, WSServerHandshakeError) as ex:
             logger.error(ex)
             await asyncio.sleep(30)
 

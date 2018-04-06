@@ -21,7 +21,7 @@ CLIENTWEBSOCKETRESPONSE_INIT_ARGS = list(
 
 
 class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
-    version: ClassVar[int] = 1
+    VERSION: ClassVar[int] = 2
 
     client_id: ClassVar[str]
     client_keys: ClassVar[Keys]
@@ -46,11 +46,12 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         self.rpc_requests = dict()
         self.rpc_completed = asyncio.Event()
 
-    async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher]:
+    async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher, int]:
         packer = xdrlib.Packer()
         packer.pack_bytes(self.client_id.encode('ascii'))
         packer.pack_hyper(last_seen_order)
         packer.pack_bytes(self.symmetric_key)
+        packer.pack_uint(self.VERSION)
         await self.send_bytes(self.server_keys.encrypt(packer.get_buffer()))
 
         response = await receive_msg(self, timeout=3)
@@ -58,10 +59,14 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         data_to_sign = unpacker.unpack_bytes()
         last_seen_sequence = unpacker.unpack_hyper()
         server_aes_key = unpacker.unpack_bytes()
+        try:
+            server_version = unpacker.unpack_uint()
+        except EOFError:
+            server_version = 1
 
         await self.send_bytes(self.client_keys.sign(data_to_sign))
 
-        return last_seen_sequence, crypto.Cipher(server_aes_key)
+        return last_seen_sequence, crypto.Cipher(server_aes_key), server_version
 
     async def send_signed(self, *args, **kwargs) -> None:
         return await self.send_signed_message(*args, **kwargs)
@@ -88,24 +93,11 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                 return self.rpc_requests.pop(request_id)
 
     async def receive_iter(self, server_cipher: crypto.Cipher) -> AsyncIterator[Tuple[int, datetime, dict]]:
-        last_heartbeat = datetime.utcnow()
         while True:
-            next_heartbeat = last_heartbeat + common.HEARTBEAT_INTERVAL * 2.1
-
-            receive_timeout = (next_heartbeat - datetime.utcnow()).total_seconds()
-
-            # if handling message took too long we should already have
-            # next message in read buffer
-            if receive_timeout <= 0:
-                receive_timeout = 0.01
-
-            try:
-                data = await receive_msg(self, timeout=receive_timeout)
-            except asyncio.TimeoutError:
-                raise exceptions.HeartbeatError(last_heartbeat, datetime.utcnow())
+            data = await receive_msg(self)
 
             if data == b'\x00':
-                last_heartbeat = datetime.utcnow()
+                pass
             else:
                 decrypted = server_cipher.decrypt(data)
                 xdr = xdrlib.Unpacker(decrypted)
@@ -168,8 +160,8 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
                      last_seen_order: int = 0,
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
-        async with session.ws_connect(ws_addr) as ws:
-            sequence_id, server_cipher = await ws.handshake(last_seen_order)
+        async with session.ws_connect(ws_addr, heartbeat=2) as ws:
+            sequence_id, server_cipher, _ = await ws.handshake(last_seen_order)
 
             async def reader_loop() -> None:
                 async for outbox_id, ts, msg in ws.receive_iter(server_cipher):

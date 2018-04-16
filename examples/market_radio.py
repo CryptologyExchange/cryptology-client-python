@@ -12,7 +12,7 @@ from typing import Optional
 SERVER = os.getenv('SERVER', 'ws://127.0.0.1:8080')
 NAME = Path(__file__).stem
 
-logging.basicConfig(level=logging.WARNING)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(NAME)
 
 

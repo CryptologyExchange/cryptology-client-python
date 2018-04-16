@@ -39,25 +39,11 @@ async def reader_loop(
     logger.info(f'broadcast connection version {version} established')
     if version != 1:
         raise exceptions.IncompatibleVersion()
-    last_heartbeat = datetime.utcnow()
     while True:
-        next_heartbeat = last_heartbeat + common.HEARTBEAT_INTERVAL * 2.1
-        receive_timeout = (next_heartbeat - datetime.utcnow()).total_seconds()
-
-        # if handling message took too long we should already have
-        # next message in read buffer
-        if receive_timeout <= 0:
-            receive_timeout = 0.01
-
-        try:
-            msg = await receive_msg(ws, timeout=receive_timeout)
-        except asyncio.TimeoutError:
-            logger.warning('missed heartbeat')
-            raise exceptions.HeartbeatError(last_heartbeat, datetime.utcnow())
+        msg = await receive_msg(ws)
 
         if msg == b'\x00':
-            logger.debug('heartbeat')
-            last_heartbeat = datetime.utcnow()
+            #  legacy heartbeat compatibility
             continue
         try:
             xdr = xdrlib.Unpacker(msg)
@@ -72,8 +58,8 @@ async def reader_loop(
                     asyncio.ensure_future(order_book_callback(
                         payload['current_order_id'],
                         payload['trade_pair'],
-                        payload['buy_levels'],
-                        payload['sell_levels']
+                        payload.get('buy_levels', dict),
+                        payload.get('sell_levels', dict)
                     ))
             elif payload['@type'] == 'AnonymousTrade':
                 if trades_callback is not None:
@@ -96,5 +82,5 @@ async def run(*, ws_addr: str, market_data_callback: MarketDataCallback = None,
               trades_callback: TradesCallback = None,
               loop: Optional[asyncio.AbstractEventLoop] = Awaitable[None]) -> None:
     async with aiohttp.ClientSession(loop=loop) as session:
-        async with session.ws_connect(ws_addr) as ws:
+        async with session.ws_connect(ws_addr, receive_timeout=5) as ws:
             await reader_loop(ws, market_data_callback, order_book_callback, trades_callback)

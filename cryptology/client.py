@@ -37,7 +37,6 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         kw.update(kwargs)
         kw.update(
             timeout=0.1,
-            receive_timeout=2,
             heartbeat=3,
         )
         super(BaseProtocolClient, self).__init__(**kw)

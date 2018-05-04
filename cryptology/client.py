@@ -36,9 +36,9 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         kw.update(dict(zip(CLIENTWEBSOCKETRESPONSE_INIT_ARGS, args)))
         kw.update(kwargs)
         kw.update(
-            timeout=0.01,
-            autoping=False,
-            heartbeat=False,
+            timeout=0.1,
+            receive_timeout=2,
+            heartbeat=3,
         )
         super(BaseProtocolClient, self).__init__(**kw)
         self.symmetric_key = os.urandom(32)

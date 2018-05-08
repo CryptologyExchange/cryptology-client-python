@@ -3,7 +3,9 @@ import asyncio
 import functools
 import inspect
 import json
+import logging
 import os
+import warnings
 import xdrlib
 
 from datetime import datetime
@@ -13,6 +15,8 @@ from . import common, crypto, exceptions, parallel
 from .market_data_client import receive_msg
 
 __all__ = ('ClientReadCallback', 'ClientWriter', 'ClientWriterStub', 'run_client', 'Keys',)
+
+logger = logging.getLogger(__name__)
 
 Keys = crypto.Keys
 
@@ -52,8 +56,10 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         packer.pack_bytes(self.symmetric_key)
         packer.pack_uint(self.VERSION)
         await self.send_bytes(self.server_keys.encrypt(packer.get_buffer()))
+        logger.debug('sent handshake')
 
         response = await receive_msg(self, timeout=3)
+        logger.debug('received handshake')
         unpacker = xdrlib.Unpacker(self.client_keys.decrypt(response))
         data_to_sign = unpacker.unpack_bytes()
         last_seen_sequence = unpacker.unpack_hyper()
@@ -64,19 +70,23 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
             server_version = 1
 
         await self.send_bytes(self.client_keys.sign(data_to_sign))
+        logger.debug('sent client key')
 
         return last_seen_sequence, crypto.Cipher(server_aes_key), server_version
 
     async def send_signed(self, *args, **kwargs) -> None:
+        warnings.warn("The 'send_signed' method is deprecated, use 'send_signed_message' instead", DeprecationWarning)
         return await self.send_signed_message(*args, **kwargs)
 
     async def send_signed_message(self, *, sequence_id: int, payload: dict) -> None:
         if self.closed:  # TODO: it's a hack. Fix the closing issue legally.
+            logger.warning('the socket is closed')
             raise exceptions.CryptologyConnectionError()
         xdr = xdrlib.Packer()
         xdr.pack_enum(common.ClientMessageType.INBOX_MESSAGE.value)
         xdr.pack_hyper(sequence_id)
         xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
+        logger.debug('sending message with seq id %i: %s', sequence_id, payload)
         await self.send_bytes(crypto.encrypt_and_sign(self.client_keys, self.client_cipher, xdr.get_buffer()))
 
     async def send_signed_request(self, *, request_id: int, payload: dict) -> Any:
@@ -84,11 +94,14 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         xdr.pack_enum(common.ClientMessageType.RPC_REQUEST.value)
         xdr.pack_hyper(request_id)
         xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
+        logger.debug('sending RPC req with req id %i: %s', request_id, payload)
         await self.send_bytes(crypto.encrypt_and_sign(self.client_keys, self.client_cipher, xdr.get_buffer()))
         while True:
+            logger.debug('waiting for RPC result')
             await self.rpc_completed.wait()
             self.rpc_completed.clear()
             if request_id in self.rpc_requests:
+                logger.debug('result received')
                 return self.rpc_requests.pop(request_id)
 
     async def receive_iter(self, server_cipher: crypto.Cipher) -> AsyncIterator[Tuple[int, datetime, dict]]:
@@ -96,27 +109,34 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
             data = await receive_msg(self)
 
             if data == b'\x00':
+                logger.debug('legacy heartbeat')
                 pass
             else:
                 decrypted = server_cipher.decrypt(data)
                 xdr = xdrlib.Unpacker(decrypted)
                 message_type: common.ServerMessageType = common.ServerMessageType.by_value(xdr.unpack_enum())
+                logger.debug('message %s received', message_type)
                 if message_type is common.ServerMessageType.OUTBOX_MESSAGE:
                     outbox_id = xdr.unpack_hyper()
                     ts = datetime.utcfromtimestamp(xdr.unpack_double())
                     payload = json.loads(xdr.unpack_string().decode('utf-8'))
+                    logger.debug('outbox message: %s', payload)
                     yield outbox_id, ts, payload
                 elif message_type is common.ServerMessageType.RPC_RESPONSE:
                     request_id = xdr.unpack_hyper()
                     payload = json.loads(xdr.unpack_string().decode('utf-8'))
+                    logger.debug('RPC response: %s', payload)
                     self.rpc_requests[request_id] = payload
                     self.rpc_completed.set()
                 elif message_type is common.ServerMessageType.ERROR_MESSAGE:
                     message = xdr.unpack_string().decode('utf-8')
                     if message == 'TimeoutError()':
+                        logger.error('heartbeat error received')
                         raise exceptions.HeartbeatError(datetime.utcnow(), datetime.utcnow())
+                    logger.error('error received: %s', message)
                     raise exceptions.CryptologyError(message)
                 else:
+                    logger.error('unsupported message type')
                     raise exceptions.UnsupportedMessageType()
 
     async def _receive_xdr(self, *, timeout: Optional[float] = None) -> xdrlib.Unpacker:
@@ -160,10 +180,13 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
         async with session.ws_connect(ws_addr, heartbeat=2) as ws:
+            logger.info('connected to the server %s', ws_addr)
             sequence_id, server_cipher, _ = await ws.handshake(last_seen_order)
+            logger.info('handshake succeeded, sequence id = %i', sequence_id)
 
             async def reader_loop() -> None:
                 async for outbox_id, ts, msg in ws.receive_iter(server_cipher):
+                    logger.debug('%s new msg from server @%i: %s', ts, outbox_id, msg)
                     asyncio.ensure_future(read_callback(ws, outbox_id, ts, msg))
 
             await parallel.run_parallel((

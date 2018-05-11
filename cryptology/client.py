@@ -58,6 +58,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         await self.send_bytes(self.server_keys.encrypt(packer.get_buffer()))
         logger.debug('sent handshake')
 
+        logger.info('handshake')
         response = await receive_msg(self, timeout=3)
         logger.debug('received handshake')
         unpacker = xdrlib.Unpacker(self.client_keys.decrypt(response))
@@ -106,6 +107,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
 
     async def receive_iter(self, server_cipher: crypto.Cipher) -> AsyncIterator[Tuple[int, datetime, dict]]:
         while True:
+            logger.info('receive_iter')
             data = await receive_msg(self)
 
             if data == b'\x00':
@@ -140,6 +142,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                     raise exceptions.UnsupportedMessageType()
 
     async def _receive_xdr(self, *, timeout: Optional[float] = None) -> xdrlib.Unpacker:
+        logger.info('_receive_xdr')
         return xdrlib.Unpacker(await receive_msg(self, timeout=timeout))
 
     async def _send_xdr(self, packer: xdrlib.Packer) -> None:

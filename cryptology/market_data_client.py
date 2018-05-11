@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 async def receive_msg(ws: aiohttp.ClientWebSocketResponse, *, timeout: Optional[float] = None) -> bytes:
     msg = await ws.receive(timeout=timeout)
     if msg.type != aiohttp.WSMsgType.BINARY:
-        logger.info('close msg received')
+        logger.info('close msg received (type %s): %s', msg.type.name, msg.data and msg.json())
         exceptions.handle_close_message(msg)
         raise exceptions.UnsupportedMessage(msg)
     return msg.data

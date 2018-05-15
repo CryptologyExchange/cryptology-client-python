@@ -42,9 +42,6 @@ async def reader_loop(
     while True:
         msg = await receive_msg(ws)
 
-        if msg == b'\x00':
-            #  legacy heartbeat compatibility
-            continue
         try:
             xdr = xdrlib.Unpacker(msg)
             message_type: common.ServerMessageType = common.ServerMessageType.by_value(xdr.unpack_enum())
@@ -73,7 +70,7 @@ async def reader_loop(
             else:
                 raise exceptions.UnsupportedMessageType()
         except (KeyError, ValueError, exceptions.UnsupportedMessageType):
-            logger.exception('')
+            logger.exception('failed to decode data')
             raise exceptions.CryptologyError('failed to decode data')
 
 
@@ -82,5 +79,5 @@ async def run(*, ws_addr: str, market_data_callback: MarketDataCallback = None,
               trades_callback: TradesCallback = None,
               loop: Optional[asyncio.AbstractEventLoop] = Awaitable[None]) -> None:
     async with aiohttp.ClientSession(loop=loop) as session:
-        async with session.ws_connect(ws_addr, receive_timeout=5) as ws:
+        async with session.ws_connect(ws_addr, receive_timeout=6, heartbeat=3) as ws:
             await reader_loop(ws, market_data_callback, order_book_callback, trades_callback)

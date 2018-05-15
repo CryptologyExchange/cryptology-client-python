@@ -72,6 +72,9 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
         except exceptions.ServerRestart:
             logger.warning('server restart')
             await asyncio.sleep(80)
+        except exceptions.InvalidKey:
+            logger.critical('the public key does not match client name')
+            break
         except (exceptions.CryptologyConnectionError, ClientConnectorError, WSServerHandshakeError) as ex:
             logger.error(ex)
             await asyncio.sleep(30)

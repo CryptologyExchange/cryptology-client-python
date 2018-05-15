@@ -22,6 +22,7 @@ async def read_order_book(order_id: int, pair: str, buy: dict, sell: dict) -> No
             logger.error('%s buy order book has size %i @ order %i', pair, len(buy), order_id)
         if len(sell) == 0:
             logger.error('%s sell order book has size %i @ order %i', pair, len(sell), order_id)
+        logger.info(f'order book @{order_id}')
     logger.info(f'sell orders of {pair} @{order_id}: {sell}')
     logger.info(f'buy orders of {pair} @{order_id}: {buy}')
 

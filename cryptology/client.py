@@ -58,7 +58,6 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         await self.send_bytes(self.server_keys.encrypt(packer.get_buffer()))
         logger.debug('sent handshake')
 
-        logger.info('handshake')
         response = await receive_msg(self, timeout=3)
         logger.debug('received handshake')
         unpacker = xdrlib.Unpacker(self.client_keys.decrypt(response))
@@ -107,42 +106,36 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
 
     async def receive_iter(self, server_cipher: crypto.Cipher) -> AsyncIterator[Tuple[int, datetime, dict]]:
         while True:
-            logger.info('receive_iter')
             data = await receive_msg(self)
 
-            if data == b'\x00':
-                logger.debug('legacy heartbeat')
-                pass
+            decrypted = server_cipher.decrypt(data)
+            xdr = xdrlib.Unpacker(decrypted)
+            message_type: common.ServerMessageType = common.ServerMessageType.by_value(xdr.unpack_enum())
+            logger.debug('message %s received', message_type)
+            if message_type is common.ServerMessageType.OUTBOX_MESSAGE:
+                outbox_id = xdr.unpack_hyper()
+                ts = datetime.utcfromtimestamp(xdr.unpack_double())
+                payload = json.loads(xdr.unpack_string().decode('utf-8'))
+                logger.debug('outbox message: %s', payload)
+                yield outbox_id, ts, payload
+            elif message_type is common.ServerMessageType.RPC_RESPONSE:
+                request_id = xdr.unpack_hyper()
+                payload = json.loads(xdr.unpack_string().decode('utf-8'))
+                logger.debug('RPC response: %s', payload)
+                self.rpc_requests[request_id] = payload
+                self.rpc_completed.set()
+            elif message_type is common.ServerMessageType.ERROR_MESSAGE:
+                message = xdr.unpack_string().decode('utf-8')
+                if message == 'TimeoutError()':
+                    logger.error('heartbeat error received')
+                    raise exceptions.HeartbeatError(datetime.utcnow(), datetime.utcnow())
+                logger.error('error received: %s', message)
+                raise exceptions.CryptologyError(message)
             else:
-                decrypted = server_cipher.decrypt(data)
-                xdr = xdrlib.Unpacker(decrypted)
-                message_type: common.ServerMessageType = common.ServerMessageType.by_value(xdr.unpack_enum())
-                logger.debug('message %s received', message_type)
-                if message_type is common.ServerMessageType.OUTBOX_MESSAGE:
-                    outbox_id = xdr.unpack_hyper()
-                    ts = datetime.utcfromtimestamp(xdr.unpack_double())
-                    payload = json.loads(xdr.unpack_string().decode('utf-8'))
-                    logger.debug('outbox message: %s', payload)
-                    yield outbox_id, ts, payload
-                elif message_type is common.ServerMessageType.RPC_RESPONSE:
-                    request_id = xdr.unpack_hyper()
-                    payload = json.loads(xdr.unpack_string().decode('utf-8'))
-                    logger.debug('RPC response: %s', payload)
-                    self.rpc_requests[request_id] = payload
-                    self.rpc_completed.set()
-                elif message_type is common.ServerMessageType.ERROR_MESSAGE:
-                    message = xdr.unpack_string().decode('utf-8')
-                    if message == 'TimeoutError()':
-                        logger.error('heartbeat error received')
-                        raise exceptions.HeartbeatError(datetime.utcnow(), datetime.utcnow())
-                    logger.error('error received: %s', message)
-                    raise exceptions.CryptologyError(message)
-                else:
-                    logger.error('unsupported message type')
-                    raise exceptions.UnsupportedMessageType()
+                logger.error('unsupported message type')
+                raise exceptions.UnsupportedMessageType()
 
     async def _receive_xdr(self, *, timeout: Optional[float] = None) -> xdrlib.Unpacker:
-        logger.info('_receive_xdr')
         return xdrlib.Unpacker(await receive_msg(self, timeout=timeout))
 
     async def _send_xdr(self, packer: xdrlib.Packer) -> None:
@@ -182,7 +175,7 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
                      last_seen_order: int = 0,
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
-        async with session.ws_connect(ws_addr, heartbeat=2) as ws:
+        async with session.ws_connect(ws_addr, receive_timeout=6, heartbeat=3) as ws:
             logger.info('connected to the server %s', ws_addr)
             sequence_id, server_cipher, _ = await ws.handshake(last_seen_order)
             logger.info('handshake succeeded, sequence id = %i', sequence_id)

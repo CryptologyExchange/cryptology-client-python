@@ -1,17 +1,15 @@
 import os
 import os.path
 import xdrlib
-from typing import Optional
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
-
+from typing import Optional, Tuple
 from . import internal
 from .exceptions import InvalidKey
 
 SIGNATURE_HASH = internal.SHA512()
-
 SIGNATURE_PADDING = internal.PSS(
     mgf=internal.MGF1(SIGNATURE_HASH),
     salt_length=internal.PSS.MAX_LENGTH
@@ -104,7 +102,10 @@ class Keys:
 
     def decrypt(self, data: bytes) -> bytes:
         assert self.private is not None
-        return self.private.decrypt(data, ENCRYPTION_PADDING)
+        try:
+            return self.private.decrypt(data, ENCRYPTION_PADDING)
+        except ValueError:
+            raise InvalidKey()
 
 
 def encrypt_and_sign(keys: Keys, cipher: Cipher, data: bytes) -> bytes:
@@ -112,3 +113,12 @@ def encrypt_and_sign(keys: Keys, cipher: Cipher, data: bytes) -> bytes:
     xdr.pack_bytes(keys.sign(data))
     xdr.pack_bytes(data)
     return cipher.encrypt(xdr.get_buffer())
+
+
+def decrypt_and_verify(keys: Keys, cipher: Cipher, encrypted: bytes) -> Tuple[bytes, bytes]:
+    raw = cipher.decrypt(encrypted)
+    xdr = xdrlib.Unpacker(raw)
+    signature = xdr.unpack_bytes()
+    data = xdr.unpack_bytes()
+    keys.verify(signature, data)
+    return raw, data

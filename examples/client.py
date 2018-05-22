@@ -35,11 +35,14 @@ async def main():
         nonlocal sid
         sid = sequence_id
 
-        sid += 1
-        await ws.send_signed_message(sequence_id=sid, payload={'@type': 'CreateAccount',})
-
-        sid += 1
-        await ws.send_signed_message(sequence_id=sid, payload={'@type': 'DepositFunds', 'currency': 'USD', 'amount': '1000000000'})
+        nonlocal rid
+        rid += 1
+        data = {
+            '@type': 'TriggerCryptoTransferRequest',
+            'currency': 'BTC',
+            'amount': '0.1',
+        }
+        await ws.send_signed_request(request_id=rid, payload=data)
 
         while True:
             sid += 1

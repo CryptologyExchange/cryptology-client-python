@@ -34,7 +34,10 @@ class Cipher:
         self.key = key
 
     def encrypt(self, data: bytes) -> bytes:
-        iv = os.urandom(16)
+        try:
+            iv = os.getrandom(16, flags=os.GRND_NONBLOCK)
+        except BlockingIOError:
+            iv = b'0' * 16
         padder = internal.PKCS7(internal.AES.block_size).padder()
         padded_data = padder.update(data) + padder.finalize()
         encryptor = internal.Cipher(internal.AES(self.key), internal.CBC(iv), BACKEND).encryptor()

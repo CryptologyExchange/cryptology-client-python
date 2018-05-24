@@ -39,10 +39,6 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         kw = {}
         kw.update(dict(zip(CLIENTWEBSOCKETRESPONSE_INIT_ARGS, args)))
         kw.update(kwargs)
-        kw.update(
-            timeout=5,
-            heartbeat=2,
-        )
         super(BaseProtocolClient, self).__init__(**kw)
         self.symmetric_key = os.urandom(32)
         self.client_cipher = crypto.Cipher(self.symmetric_key)
@@ -175,7 +171,7 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
                      last_seen_order: int = 0,
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
-        async with session.ws_connect(ws_addr, receive_timeout=6, heartbeat=3) as ws:
+        async with session.ws_connect(ws_addr, autoclose=True, autoping=True, receive_timeout=10, heartbeat=4) as ws:
             logger.info('connected to the server %s', ws_addr)
             sequence_id, server_cipher, _ = await ws.handshake(last_seen_order)
             logger.info('handshake succeeded, sequence id = %i', sequence_id)

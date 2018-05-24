@@ -22,26 +22,33 @@ ENCRYPTION_PADDING = internal.OAEP(
 )
 
 BACKEND = default_backend()
+IV_LIFETIME = 10000
 
 
 class Cipher:
-    __slots__ = ('key',)
+    __slots__ = ('key', 'iv', 'iv_counter',)
 
     key: bytes
+    iv: bytes
+    iv_counter: int
 
     def __init__(self, key: bytes) -> None:
         assert len(key) == 32
         self.key = key
+        self.update_iv()
+
+    def update_iv(self):
+        self.iv = os.urandom(16)
+        self.iv_counter = IV_LIFETIME
 
     def encrypt(self, data: bytes) -> bytes:
-        try:
-            iv = os.getrandom(16, flags=os.GRND_NONBLOCK)
-        except BlockingIOError:
-            iv = b'0' * 16
+        self.iv_counter -= 1
+        if not self.iv_counter:
+            self.update_iv()
         padder = internal.PKCS7(internal.AES.block_size).padder()
         padded_data = padder.update(data) + padder.finalize()
-        encryptor = internal.Cipher(internal.AES(self.key), internal.CBC(iv), BACKEND).encryptor()
-        return iv + encryptor.update(padded_data) + encryptor.finalize()
+        encryptor = internal.Cipher(internal.AES(self.key), internal.CBC(self.iv), BACKEND).encryptor()
+        return self.iv + encryptor.update(padded_data) + encryptor.finalize()
 
     def decrypt(self, data: bytes) -> bytes:
         iv, cipherdata = data[:16], data[16:]
@@ -64,7 +71,7 @@ class Cipher:
 class Keys:
     __slots__ = ('public', 'private',)
 
-    public: internal.RSAPublicKey
+    public: Optional[internal.RSAPublicKey]
     private: Optional[internal.RSAPrivateKey]
 
     @staticmethod
@@ -86,7 +93,7 @@ class Keys:
 
         return Keys(public_key, private_key)
 
-    def __init__(self, public: internal.RSAPublicKey, private: Optional[internal.RSAPrivateKey]) -> None:
+    def __init__(self, public: Optional[internal.RSAPublicKey], private: Optional[internal.RSAPrivateKey]) -> None:
         self.public = public
         self.private = private
 

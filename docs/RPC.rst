@@ -81,7 +81,7 @@ Full active orders list
         }
 
 
-Balance of the account
+Account balance
 =======================
 
 - ``UserBalanceRequest``

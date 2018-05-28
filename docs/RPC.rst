@@ -79,3 +79,36 @@ Full active orders list
                 }
             }
         }
+
+
+Balance of the account
+=======================
+
+- ``UserBalanceRequest``
+    request of the up to date balance
+
+    .. code-block:: json
+
+        {
+            "@type": "UserBalanceRequest"
+        }
+
+- ``UserBalanceResponse``
+    result of ``UserBalanceRequest`` execution
+
+    .. code-block:: json
+
+        {
+            "@type": "UserBalanceResponse",
+            "account_id": "user",
+            "balances": {
+                "BTC": {
+                    "available": "3.1415",
+                    "on_hold": "42"
+                },
+                "USD": {
+                    "available": "1000000",
+                    "on_hold": "0"
+                }
+            }
+        }

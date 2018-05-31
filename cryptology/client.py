@@ -25,7 +25,7 @@ CLIENTWEBSOCKETRESPONSE_INIT_ARGS = list(
 
 
 class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
-    VERSION: ClassVar[int] = 2
+    VERSION: ClassVar[int] = 3
 
     client_id: ClassVar[str]
     client_keys: ClassVar[Keys]
@@ -83,7 +83,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         xdr.pack_hyper(sequence_id)
         xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
         logger.debug('sending message with seq id %i: %s', sequence_id, payload)
-        await self.send_bytes(crypto.encrypt_and_sign(self.client_keys, self.client_cipher, xdr.get_buffer()))
+        await self.send_bytes(self.client_cipher.encrypt(xdr.get_buffer()))
 
     async def send_signed_request(self, *, request_id: int, payload: dict) -> Any:
         xdr = xdrlib.Packer()
@@ -91,7 +91,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         xdr.pack_hyper(request_id)
         xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
         logger.debug('sending RPC req with req id %i: %s', request_id, payload)
-        await self.send_bytes(crypto.encrypt_and_sign(self.client_keys, self.client_cipher, xdr.get_buffer()))
+        await self.send_bytes(self.client_cipher.encrypt(xdr.get_buffer()))
         while True:
             logger.debug('waiting for RPC result')
             await self.rpc_completed.wait()
@@ -173,8 +173,8 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
         async with session.ws_connect(ws_addr, autoclose=True, autoping=True, receive_timeout=10, heartbeat=4) as ws:
             logger.info('connected to the server %s', ws_addr)
-            sequence_id, server_cipher, _ = await ws.handshake(last_seen_order)
-            logger.info('handshake succeeded, sequence id = %i', sequence_id)
+            sequence_id, server_cipher, server_version = await ws.handshake(last_seen_order)
+            logger.info('handshake succeeded, server version %i, sequence id = %i', server_version, sequence_id)
 
             async def reader_loop() -> None:
                 async for outbox_id, ts, msg in ws.receive_iter(server_cipher):

@@ -37,8 +37,6 @@ async def reader_loop(
     xdr = xdrlib.Unpacker(msg)
     version = xdr.unpack_uint()
     logger.info(f'broadcast connection version {version} established')
-    if version != 1:
-        raise exceptions.IncompatibleVersion()
     while True:
         msg = await receive_msg(ws)
 

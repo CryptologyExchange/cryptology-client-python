@@ -44,6 +44,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         self.client_cipher = crypto.Cipher(self.symmetric_key)
         self.rpc_requests = dict()
         self.rpc_completed = asyncio.Event()
+        self.send_fut = None
 
     async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher, int]:
         packer = xdrlib.Packer()
@@ -75,15 +76,18 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         return await self.send_signed_message(*args, **kwargs)
 
     async def send_signed_message(self, *, sequence_id: int, payload: dict) -> None:
-        if self.closed:  # TODO: it's a hack. Fix the closing issue legally.
+        if self.closed:
             logger.warning('the socket is closed')
             raise exceptions.CryptologyConnectionError()
         xdr = xdrlib.Packer()
         xdr.pack_enum(common.ClientMessageType.INBOX_MESSAGE.value)
         xdr.pack_hyper(sequence_id)
         xdr.pack_bytes(json.dumps(payload).encode('utf-8'))
+        encrypted = self.client_cipher.encrypt(xdr.get_buffer())
+        if self.send_fut:
+            await self.send_fut
         logger.debug('sending message with seq id %i: %s', sequence_id, payload)
-        await self.send_bytes(self.client_cipher.encrypt(xdr.get_buffer()))
+        self.send_fut = asyncio.ensure_future(self.send_bytes(encrypted))
 
     async def send_signed_request(self, *, request_id: int, payload: dict) -> Any:
         xdr = xdrlib.Packer()

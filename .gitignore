@@ -4,6 +4,7 @@ build/
 cryptology_client_python.egg-info/
 dist/
 venv/
+.venv/
 html/
 latex/
 site/.terraform

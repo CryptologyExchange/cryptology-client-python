@@ -3,7 +3,7 @@ all: clean sdist latex html
 
 .PHONY: sdist
 sdist:
-	./venv/bin/python setup.py sdist
+	python setup.py sdist
 
 .PHONY: clean
 clean:
@@ -11,12 +11,12 @@ clean:
 
 .PHONY: latex
 latex:
-	./venv/bin/sphinx-build -b latex docs ./latex
+	sphinx-build -b latex docs ./latex
 	cd latex && make
 
 .PHONY: html
 html:
-	./venv/bin/sphinx-build -b html docs ./html
+	sphinx-build -b html docs ./html
 
 .PHONY: publish
 publish: clean html

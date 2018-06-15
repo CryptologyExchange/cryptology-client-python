@@ -17,13 +17,16 @@ timestamp in the UTC time zone. The second value is a number of microseconds.
 - ``BuyOrderPlaced``, ``SellOrderPlaced``
     order was received by cryptology. ``closed_inline`` indicates
     order was fully executed immediately, it's safe not to expect (and therefore ignore
-    following messages for this order, end of order lifecycle)
+    following messages for this order, end of order lifecycle).
+    ``initial_amount`` equals to the full order size while ``amount`` is the part
+    of the order left after instant order execution and placed to the order book.
 
     .. code-block:: json
 
         {
             "@type": "BuyOrderPlaced",
             "amount": "1",
+            "initial_amount": "3",
             "closed_inline": false,
             "order_id": 1,
             "price": "1",

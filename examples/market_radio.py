@@ -44,8 +44,8 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
                 trades_callback=read_trades,
                 loop=loop
             )
-        except cryptology.exceptions.HeartbeatError:
-            logger.error('missed heartbeat')
+        except cryptology.exceptions.RateLimit:
+            logger.error('rate limit reached')
         except cryptology.exceptions.ServerRestart:
             logger.warning('server restart')
             await asyncio.sleep(80)

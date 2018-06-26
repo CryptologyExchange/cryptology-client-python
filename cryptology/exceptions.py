@@ -31,6 +31,10 @@ class DuplicateClientOrderId(CryptologyProtocolError):
     pass
 
 
+class InvalidPayload(CryptologyProtocolError):
+    pass
+
+
 class UnsupportedMessage(CryptologyProtocolError):
     msg: aiohttp.WSMessage
 
@@ -71,6 +75,10 @@ class HeartbeatError(CryptologyConnectionError):
         self.now = now
 
 
+class RateLimit(CryptologyConnectionError):
+    pass
+
+
 def handle_close_message(msg: aiohttp.WSMessage) -> None:
     if msg.type in CLOSE_MESSAGES:
         if msg.type == aiohttp.WSMsgType.CLOSE:
@@ -80,6 +88,10 @@ def handle_close_message(msg: aiohttp.WSMessage) -> None:
                 raise InvalidSequence()
             elif msg.data == 4002:
                 raise DuplicateClientOrderId()
+            elif 4003 <= msg.data <= 4008:
+                raise InvalidPayload()
+            elif msg.data == 4009:
+                raise RateLimit()
             elif msg.data == 1012:
                 raise ServerRestart()
         raise Disconnected(msg.data)

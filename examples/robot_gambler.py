@@ -67,8 +67,8 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
                 last_seen_order=-1,
                 loop=loop
             )
-        except exceptions.HeartbeatError:
-            logger.error('missed heartbeat')
+        except exceptions.RateLimit:
+            logger.error('rate limit reached')
         except exceptions.ServerRestart:
             logger.warning('server restart')
             await asyncio.sleep(80)

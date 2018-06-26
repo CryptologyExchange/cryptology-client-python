@@ -31,3 +31,4 @@ class ServerMessageType(ByValue):
     RPC_RESPONSE = 2
     ERROR_MESSAGE = 3
     BROADCAST_MESSAGE = 4
+    THROTTLING_MESSAGE = 5

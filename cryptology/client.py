@@ -25,7 +25,7 @@ CLIENTWEBSOCKETRESPONSE_INIT_ARGS = list(
 
 
 class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
-    VERSION: ClassVar[int] = 3
+    VERSION: ClassVar[int] = 4
 
     client_id: ClassVar[str]
     client_keys: ClassVar[Keys]
@@ -45,6 +45,7 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         self.rpc_requests = dict()
         self.rpc_completed = asyncio.Event()
         self.send_fut = None
+        self.throttle = 0
 
     async def handshake(self, last_seen_order: int) -> Tuple[int, crypto.Cipher, int]:
         packer = xdrlib.Packer()
@@ -86,6 +87,10 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
         encrypted = self.client_cipher.encrypt(xdr.get_buffer())
         if self.send_fut:
             await self.send_fut
+        if self.throttle:
+            logger.warning('throttle for %f seconds', self.throttle)
+            throttle, self.throttle = self.throttle, 0
+            await asyncio.sleep(throttle)
         logger.debug('sending message with seq id %i: %s', sequence_id, payload)
         self.send_fut = asyncio.ensure_future(self.send_bytes(encrypted))
 
@@ -112,7 +117,10 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
             xdr = xdrlib.Unpacker(decrypted)
             message_type: common.ServerMessageType = common.ServerMessageType.by_value(xdr.unpack_enum())
             logger.debug('message %s received', message_type)
-            if message_type is common.ServerMessageType.OUTBOX_MESSAGE:
+            if message_type is common.ServerMessageType.THROTTLING_MESSAGE:
+                level = xdr.unpack_int()
+                self.throttle = 0.001 * level
+            elif message_type is common.ServerMessageType.OUTBOX_MESSAGE:
                 outbox_id = xdr.unpack_hyper()
                 ts = datetime.utcfromtimestamp(xdr.unpack_double())
                 payload = json.loads(xdr.unpack_string().decode('utf-8'))

@@ -48,6 +48,11 @@ async def read_callback(ws: ClientWriterStub, order: int, ts: datetime, payload:
     logger.debug(f'received: {order}, {ts}, {payload}')
 
 
+async def throttling(level: int, sequence_id: int, order_id: int) -> bool:
+    logger.warning(f'OMG!!! {level} queued messages. Slow down!')
+    return False
+
+
 async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
     random.seed()
     client_keys = Keys.load(NAME + '.pub', NAME + '.priv')
@@ -64,6 +69,7 @@ async def main(loop: Optional[asyncio.AbstractEventLoop] = None):
                 server_keys=server_keys,
                 writer=writer,
                 read_callback=read_callback,
+                throttling_callback=throttling,
                 last_seen_order=-1,
                 loop=loop
             )

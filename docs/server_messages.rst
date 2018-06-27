@@ -47,6 +47,7 @@ timestamp in the UTC time zone. The second value is a number of microseconds.
             "@type": "BuyOrderAmountChanged",
             "amount": "1",
             "order_id": 1,
+            "fee": "0.002",
             "time": [
                 946684800,
                 0
@@ -168,23 +169,3 @@ General
                 "maker_buy": false,
                 "order_id": int,
             }
-
-
-- ``OrderBookAgg``
-    aggregated order book for given symbol, recalculated after each order book change
-    (most likely will be throttled to reasonble interval in future). may have empty ``buy_levels``
-    or ``sell_levels`` in case of empty order book. both levels dictionaries use price as key
-    and volume as value
-
-    .. code-block:: json
-
-        {
-            "@type": "OrderBookAgg",
-            "buy_levels": {
-                "1": "1"
-            },
-            "sell_levels": {
-                "0.1": "1"
-            },
-            "trade_pair": "BTC_USD"
-        }

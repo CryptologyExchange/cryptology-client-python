@@ -16,3 +16,4 @@ Welcome to cryptology-client-python's documentation!
     client_messages
     server_messages
     RPC
+    market_data_protocol

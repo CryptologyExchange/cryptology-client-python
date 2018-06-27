@@ -165,8 +165,10 @@ where ``MESSAGE TYPE`` determines payload type:
    Contains text description of the error in recent client messages.
    Followed by disconnect with error code.
 
-Server also sends heartbeat messages (single zero byte) every 2 seconds, so client
-can decide if connection is still alive.
+- THROTTLING message
+   Contains integer amount of orders the client should postpone to send to keep up with rate limit.
+   If no action taken the connection will be terminated with error "rate limit".
+   Followed by ``REQUEST ID`` and ``ORDER ID`` of the order affected rate limit.
 
 
 Cryptography

@@ -11,9 +11,9 @@ Messages
 
 - ``OrderBookAgg``
     aggregated order book for given symbol, recalculated after each order book change
-    (most likely will be throttled to reasonble interval in future). May have empty ``buy_levels``
-    or ``sell_levels`` in case of empty order book. Both levels dictionaries use price as key
-    and volume as value. ``current_order_id`` denotes the order that lead to the state of the order book.
+    (most likely will be throttled to reasonable interval in future). May have empty dictionaries ``buy_levels``
+    or ``sell_levels`` in case of an empty order book. Both dictionaries use the price as a key
+    and volume as a value. ``current_order_id`` denotes the order that leads to the state of the order book.
 
     .. code-block:: json
 

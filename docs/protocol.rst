@@ -6,7 +6,7 @@ Protocol
 Handshake
 ---------
 
-Client sends encrypted (with cryptology pub key) payload containing ``CLIENT ID``,
+Client sends encrypted (with cryptology pub key) the payload containing ``CLIENT ID``,
 ``LAST SEEN ORDER`` and ``CLIENT AES KEY``. aes key is random and session scoped:
 
 .. math::
@@ -24,7 +24,7 @@ Client sends encrypted (with cryptology pub key) payload containing ``CLIENT ID`
        \Big]
     \Bigg]
 
-In response, server sends payload, encrypted with client pub key:
+In response, server sends the payload, encrypted with a client pub key:
 
 .. math::
     \scriptsize
@@ -41,7 +41,7 @@ In response, server sends payload, encrypted with client pub key:
         \Big]
     \Bigg]
 
-Finally, client confirms key ownership by signing ``DATA TO SIGN`` with private key:
+Finally, a client confirms key ownership by signing ``DATA TO SIGN`` with the private key:
 
 .. math::
     \scriptsize
@@ -59,10 +59,10 @@ There are two types of client messages: Request Messages and RPC Messages.
 The type is determined by the ``MESSAGE TYPE`` field.
 Every request message includes ``SEQUENCE``, sequential value starting
 from ``LAST SEEN SEQUENCE`` provided by server during handshake. It also has
-rsa signature proving that given message is authorized by client. Aes is using
+rsa signature proving that the given message is authorized by the client. Aes is using
 session scoped ``CLIENT AES KEY`` generated during handshake.
 Payload is described in :doc:`/client_messages`.
-A RPC message has similar structure except that ``REQUEST_ID`` has to be unique only
+An RPC message has a similar structure except that ``REQUEST_ID`` has to be unique only
 during current RPC request execution. The corresponding RPC response contains
 the same ``REQUEST_ID`` as a reference.
 
@@ -106,7 +106,7 @@ the same ``REQUEST_ID`` as a reference.
         \Big]
     \end{gather*}
 
-Every sever message has the following shape:
+Every server message has the following shape:
 
 
 .. math::
@@ -153,22 +153,22 @@ Every sever message has the following shape:
 where ``MESSAGE TYPE`` determines payload type:
 
 - MESSAGE payload
-   ``TRANSACTION ID`` is incremental (but not necessarily sequential) value indicating
-   message order on server and used by client to skip processed events on reconnect.
-   ``TIMESTAMP`` indicates when particular event happened on server.
+   ``TRANSACTION ID`` is an incremental (but not necessarily sequential) value indicating
+   message order on server and used by the client to skip processed events on reconnect.
+   ``TIMESTAMP`` indicates when a particular event happened on server.
    Payload is described in :doc:`/server_messages`.
 
 - RPC payload
    The ``REQUEST_ID`` field in the ``RPC`` response messages has the same value as in the request.
 
 - ERROR message
-   Contains text description of the error in recent client messages.
-   Followed by disconnect with error code.
+   Contains a text description of the error in recent client messages.
+   Followed by disconnect with an error code.
 
 - THROTTLING message
-   Contains integer amount of orders the client should postpone to send to keep up with rate limit.
+   Contains an integer amount of orders the client should postpone sending to keep up with the rate limit.
    If no action taken the connection will be terminated with error "rate limit".
-   Followed by ``REQUEST ID`` and ``ORDER ID`` of the order affected rate limit.
+   Followed by ``REQUEST ID`` and ``ORDER ID`` of the order affected the rate limit.
 
 
 Cryptography

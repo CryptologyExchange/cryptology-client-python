@@ -6,8 +6,8 @@ Server messages
 Order lifecycle
 ===============
 
-After place order message is received by cryptology (TBD) following messages
-will be sent over websocket connection. All order related messages are partner
+After a place order message is received by cryptology (TBD) the following messages
+will be sent over web socket connection. All order related messages are partner
 specific (i.e. you can't receive any of these messages for regular user or
 other partner orders).
 The ``time`` parameter is a list of two integers. The first one is a UNIX
@@ -16,8 +16,8 @@ timestamp in the UTC time zone. The second value is a number of microseconds.
 
 - ``BuyOrderPlaced``, ``SellOrderPlaced``
     order was received by cryptology. ``closed_inline`` indicates
-    order was fully executed immediately, it's safe not to expect (and therefore ignore
-    following messages for this order, end of order lifecycle).
+    an order that was fully executed immediately, it’s safe not to expect (and, therefore ignore)
+    other messages for this order. End of order lifecycle.
     ``initial_amount`` equals to the full order size while ``amount`` is the part
     of the order left after instant order execution and placed to the order book.
 
@@ -39,7 +39,7 @@ timestamp in the UTC time zone. The second value is a number of microseconds.
         }
 
 - ``BuyOrderAmountChanged``, ``SellOrderAmountChanged``
-    order was partially executed, sets new amount
+    order was partially executed, sets a new amount
 
     .. code-block:: json
 
@@ -102,7 +102,7 @@ Wallet
 ======
 
 - ``SetBalance``
-    sets new partner balance for given currency
+    sets a new partner balance for a given currency
 
     .. code-block:: json
 
@@ -119,7 +119,7 @@ Wallet
         }
 
 - ``InsufficientFunds``
-    indicates that the account doesn't have enough funds to place the order
+    indicates that an account doesn't have enough funds to place an order
 
     .. code-block:: json
 
@@ -152,7 +152,7 @@ General
             }
 
     - ``OwnTrade``
-        sent when the account participated in a deal on either side.
+        sent when an account participated in a deal on either side.
 
         .. code-block:: json
 

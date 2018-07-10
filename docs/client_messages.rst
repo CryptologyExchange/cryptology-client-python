@@ -25,7 +25,7 @@ Order placement
 - ``PlaceSellIoCOrder``
     immediate or cancel ask
 
-all order placement messages share same structure
+all order placement messages share the same structure
 
 .. code-block:: json
 
@@ -39,7 +39,7 @@ all order placement messages share same structure
     }
 
 ``client_order_id`` is a tag to relate server messages to client ones.
-``ttl`` is time the order is valid for. Measured in seconds (with 1 minute granularity).
+``ttl`` is the time the order is valid for. Measured in seconds (with 1 minute granularity).
 0 means valid forever.
 
 

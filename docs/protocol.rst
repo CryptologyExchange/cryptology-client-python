@@ -146,6 +146,8 @@ Every sever message has the following shape:
     \text{ERROR_MESSAGE} =
         \text{XDR}
         \Big[
+            \underbrace{\text{ERROR_TYPE}}_\text{ENUM}
+            \quad
             \underbrace{\text{MESSAGE}}_\text{BINARY}
         \Big]
     \end{gather*}
@@ -169,6 +171,19 @@ where ``MESSAGE TYPE`` determines payload type:
    Contains integer amount of orders the client should postpone to send to keep up with rate limit.
    If no action taken the connection will be terminated with error "rate limit".
    Followed by ``REQUEST ID`` and ``ORDER ID`` of the order affected rate limit.
+
+and ``ERROR_TYPE`` determines an error type:
+
+- DUPLICATE_CLIENT_ORDER_ID error
+    ``client_order_id`` must be a unique field for each order created.
+    ``DUPLICATE_CLIENT_ORDER_ID`` means that ``client_order_id`` in the sent message is not unique.
+
+- INVALID_PAYLOAD error
+    All client messages must be in a valid JSON format and contain all the required fields.
+    ``INVALID_PAYLOAD`` means that client sends an invalid JSON or any required parameter is not sent.
+
+- UNKNOWN_ERROR error
+    Any other errors.
 
 
 Cryptography

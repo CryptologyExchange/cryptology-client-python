@@ -153,12 +153,19 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                 self.rpc_requests[request_id] = payload
                 self.rpc_completed.set()
             elif message_type is common.ServerMessageType.ERROR_MESSAGE:
+                error_type = common.ServerErrorType.by_value(xdr.unpack_int())
                 message = xdr.unpack_string().decode('utf-8')
                 if message == 'TimeoutError()':
                     logger.error('heartbeat error received')
                     raise exceptions.HeartbeatError(datetime.utcnow(), datetime.utcnow())
                 logger.error('error received: %s', message)
-                raise exceptions.CryptologyError(message)
+
+                if error_type == common.ServerErrorType.UNKNOWN_ERROR:
+                    raise exceptions.CryptologyError(message)
+                elif error_type == common.ServerErrorType.INVALID_PAYLOAD:
+                    raise exceptions.InvalidPayload(message)
+                elif error_type == common.ServerErrorType.DUPLICATE_CLIENT_ORDER_ID:
+                    raise exceptions.DuplicateClientOrderId()
             else:
                 logger.error('unsupported message type')
                 raise exceptions.UnsupportedMessageType()

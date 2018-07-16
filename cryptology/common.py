@@ -32,3 +32,9 @@ class ServerMessageType(ByValue):
     ERROR_MESSAGE = 3
     BROADCAST_MESSAGE = 4
     THROTTLING_MESSAGE = 5
+
+
+class ServerErrorType(ByValue):
+    UNKNOWN_ERROR = -1
+    DUPLICATE_CLIENT_ORDER_ID = 1
+    INVALID_PAYLOAD = 2

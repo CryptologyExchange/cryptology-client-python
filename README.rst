@@ -10,9 +10,8 @@ Features
 --------
 
 - Asynchronous implementation of all WebSocket Market Data and Account endpoints.
-- No need to generate timestamps yourself, the client does it for you
-- Response exception handling
-- Withdraw functionality
+- Handling response errors
+- Withdrawal functionality
 
 Quick Start
 -----------
@@ -21,6 +20,14 @@ Receive your own API public/secret keys pair.
 .. code:: bash
 
     pip install cryptology-client-python
+
+Run tests.
+
+.. code:: bash
+
+    make tests
+
+And see example.
 
 .. code:: python
 

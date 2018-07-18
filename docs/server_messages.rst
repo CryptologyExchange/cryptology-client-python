@@ -102,7 +102,10 @@ Wallet
 ======
 
 - ``SetBalance``
-    sets a new partner balance for a given currency
+    sets a new partner balance for a given currency.
+    ``reason`` can be ``trade`` or ``on_hold`` for the changes caused by trades,
+    ``transfer`` for balance update by depositing money or
+    ``withdraw`` as a result of a withdrawal.
 
     .. code-block:: json
 
@@ -111,7 +114,7 @@ Wallet
             "balance": "1",
             "change": "1",
             "currency": "USD",
-            "reason": "aaaaa",
+            "reason": "trade",
             "time": [
                 946684800,
                 0
@@ -133,26 +136,10 @@ Wallet
 General
 =======
 
-..
-    - ``AnonymousTrade``
-        indicates any trade that happens on cryptology with sensitive data removed
-
-        .. code-block:: json
-
-            {
-                "@type": "AnonymousTrade",
-                "amount": "1",
-                "maker_buy": false,
-                "price": "1",
-                "time": [
-                    946684800,
-                    0
-                ],
-                "trade_pair": "BTC_USD"
-            }
-
     - ``OwnTrade``
-        sent when an account participated in a deal on either side.
+        sent when the account participated in a deal on either side.
+        ``maker`` equals ``true`` if the account was a maker.
+        ``maker_buy`` equals ``true`` if the maker side was buying.
 
         .. code-block:: json
 
@@ -167,5 +154,6 @@ General
                 "price": "1",
                 "maker": true,
                 "maker_buy": false,
-                "order_id": int,
+                "order_id": 1,
+                "client_order_id": 123
             }

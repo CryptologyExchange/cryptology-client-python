@@ -86,10 +86,6 @@ def handle_close_message(msg: aiohttp.WSMessage) -> None:
                 raise ConcurrentConnection()
             elif msg.data == 4001:
                 raise InvalidSequence()
-            elif msg.data == 4002:
-                raise DuplicateClientOrderId()
-            elif 4003 <= msg.data <= 4008:
-                raise InvalidPayload()
             elif msg.data == 4009:
                 raise RateLimit()
             elif msg.data == 1012:

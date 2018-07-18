@@ -1,5 +1,5 @@
 .PHONY: all
-all: clean sdist latex html
+all: clean sdist latex html tests
 
 .PHONY: sdist
 sdist:
@@ -21,3 +21,7 @@ html:
 .PHONY: publish
 publish: clean html
 	aws s3 sync --exact-timestamps --acl public-read html s3://client-python.docs.cryptology.com
+
+.PHONY: tests
+tests:
+	pytest

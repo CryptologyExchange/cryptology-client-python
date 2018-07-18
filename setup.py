@@ -18,6 +18,10 @@ setup(
         'aiohttp >= 2.3.6',
         'cchardet',
         'cryptography >= 2.1.4',
-        'pytz >= 2013.6'
-    ]
+    ],
+    extras_require={
+        'devel': ['pytz',
+                  'pytest-aiohttp'
+                  ]
+    }
 )

@@ -11,3 +11,4 @@ site/.terraform
 site/terraform.tfstate
 site/terraform.tfstate.backup
 __pycache__
+.pytest_cache

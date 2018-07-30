@@ -9,7 +9,7 @@ import warnings
 import xdrlib
 
 from datetime import datetime
-from typing import Any, AsyncIterator, Awaitable, Callable, ClassVar, Optional, Tuple, Type, cast
+from typing import Any, AsyncIterator, Awaitable, Callable, ClassVar, Optional, Tuple, Type, cast, List
 
 from . import common, crypto, exceptions, parallel
 from .market_data_client import receive_msg
@@ -38,6 +38,7 @@ class ClientWriterStub:
 ClientReadCallback = Callable[[ClientWriterStub, int, datetime, dict], Awaitable[None]]
 ClientWriter = Callable[[ClientWriterStub, int], Awaitable[None]]
 ClientThrottlingCallback = Callable[[int, int, int], Awaitable[bool]]
+TradesStateChangedCallback = Callable[[List[str], bool], Awaitable[None]]
 
 
 class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
@@ -125,7 +126,8 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                 logger.debug('result received')
                 return self.rpc_requests.pop(request_id)
 
-    async def receive_iter(self, server_cipher: crypto.Cipher, throttling_callback: ClientThrottlingCallback
+    async def receive_iter(self, server_cipher: crypto.Cipher, throttling_callback: ClientThrottlingCallback,
+                           trades_state_changed_callback: TradesStateChangedCallback
                            ) -> AsyncIterator[Tuple[int, datetime, dict]]:
         while True:
             data = await receive_msg(self)
@@ -166,6 +168,25 @@ class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
                     raise exceptions.InvalidPayload(message)
                 elif error_type == common.ServerErrorType.DUPLICATE_CLIENT_ORDER_ID:
                     raise exceptions.DuplicateClientOrderId()
+                elif error_type == common.ServerErrorType.TRADES_DISABLED:
+                    raise exceptions.TradesDisabledError()
+            elif message_type == common.ServerMessageType.BROADCAST_MESSAGE:
+                message = xdr.unpack_string().decode('utf-8')
+                payload = json.loads(message)
+                if payload['@type'] == 'TradesDisabledOnPairs':
+                    if trades_state_changed_callback:
+                        await trades_state_changed_callback(payload['trade_pairs'], False)
+                    else:
+                        logger.warning('Trades disabled for pairs {},'
+                                       'but trades_state_changed_callback'
+                                       ' is not seted'.format(' '.join(payload['trade_pairs'])))
+                elif payload['@type'] == 'TradesEnabledOnPairs':
+                    if trades_state_changed_callback:
+                        await trades_state_changed_callback(payload['trade_pairs'], True)
+                    else:
+                        logger.warning('Trades enabled for pairs {},'
+                                       'but trades_state_changed_callback'
+                                       ' is not seted'.format(' '.join(payload['trade_pairs'])))
             else:
                 logger.error('unsupported message type')
                 raise exceptions.UnsupportedMessageType()
@@ -193,6 +214,7 @@ class CryptologyClientSession(aiohttp.ClientSession):
 async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_keys: Keys,
                      read_callback: ClientReadCallback, writer: ClientWriter,
                      throttling_callback: ClientThrottlingCallback = None,
+                     trades_state_changed_callback: TradesStateChangedCallback = None,
                      last_seen_order: int = 0,
                      loop: Optional[asyncio.AbstractEventLoop] = None) -> None:
     async with CryptologyClientSession(client_id, client_keys, server_keys, loop=loop) as session:
@@ -202,7 +224,8 @@ async def run_client(*, client_id: str, client_keys: Keys, ws_addr: str, server_
             logger.info('handshake succeeded, server version %i, sequence id = %i', server_version, sequence_id)
 
             async def reader_loop() -> None:
-                async for outbox_id, ts, msg in ws.receive_iter(server_cipher, throttling_callback):
+                async for outbox_id, ts, msg in ws.receive_iter(server_cipher, throttling_callback,
+                                                                trades_state_changed_callback):
                     logger.debug('%s new msg from server @%i: %s', ts, outbox_id, msg)
                     asyncio.ensure_future(read_callback(ws, outbox_id, ts, msg))
 

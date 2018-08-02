@@ -42,7 +42,7 @@ TradesStateChangedCallback = Callable[[List[str], bool], Awaitable[None]]
 
 
 class BaseProtocolClient(aiohttp.ClientWebSocketResponse):
-    VERSION: ClassVar[int] = 4
+    VERSION: ClassVar[int] = 5
 
     client_id: ClassVar[str]
     client_keys: ClassVar[Keys]

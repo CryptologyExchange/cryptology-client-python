@@ -158,6 +158,7 @@ Wallet
     indicates transaction information when withdrawing funds from the account
 
     .. code-block:: json
+
         {
             "@type": "WithdrawalTransactionAccepted",
             "currency": "BTC",

@@ -35,6 +35,10 @@ class InvalidPayload(CryptologyProtocolError):
     pass
 
 
+class TradesDisabledError(CryptologyError):
+    pass
+
+
 class UnsupportedMessage(CryptologyProtocolError):
     msg: aiohttp.WSMessage
 
